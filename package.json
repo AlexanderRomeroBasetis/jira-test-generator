@@ -1,0 +1,66 @@
+{
+  "name": "jira-test-generator",
+  "displayName": "jira-test-generator",
+  "description": "",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.102.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "enabledApiProposals": [
+    "languageModelSystem"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "jira-test-generator.helloWorld",
+        "title": "Hello World"
+      },
+      {
+        "command": "jira-test-generator.getJiraIssue",
+        "title": "Get Jira Issue"
+      }
+    ],
+    "configuration": {
+      "title": "Jira Test Generator",
+      "properties": {
+        "jiraTestGenerator.backendUrl": {
+          "type": "string",
+          "default": "http://localhost:3000",
+          "description": "URL del backend NestJS que se conecta a Jira"
+        },
+        "jiraTestGenerator.apiKey": {
+          "type": "string",
+          "description": "API Key para autenticación con el backend (opcional)"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/axios": "^0.9.36",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "20.x",
+    "@types/vscode": "^1.102.0",
+    "@typescript-eslint/eslint-plugin": "^8.31.1",
+    "@typescript-eslint/parser": "^8.31.1",
+    "@vscode/test-cli": "^0.0.11",
+    "@vscode/test-electron": "^2.5.2",
+    "eslint": "^9.25.1",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "axios": "^1.10.0"
+  }
+}
