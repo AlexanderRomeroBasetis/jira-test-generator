@@ -28,14 +28,17 @@
     "configuration": {
       "title": "Jira Test Generator",
       "properties": {
-        "jiraTestGenerator.backendUrl": {
+        "jiraTestGenerator.jiraUrl": {
           "type": "string",
-          "default": "http://localhost:3000",
-          "description": "URL del backend NestJS que se conecta a Jira"
+          "description": "URL de tu instancia de Jira (ej: https://tuempresa.atlassian.net)"
         },
-        "jiraTestGenerator.apiKey": {
+        "jiraTestGenerator.email": {
           "type": "string",
-          "description": "API Key para autenticación con el backend (opcional)"
+          "description": "Tu email de Jira para autenticación"
+        },
+        "jiraTestGenerator.apiToken": {
+          "type": "string",
+          "description": "API Token de Jira para autenticación (generar en Account Settings > Security > API tokens)"
         }
       }
     }
@@ -49,7 +52,6 @@
     "test": "vscode-test"
   },
   "devDependencies": {
-    "@types/axios": "^0.9.36",
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
     "@types/vscode": "^1.102.0",

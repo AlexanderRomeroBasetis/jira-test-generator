@@ -34,50 +34,86 @@ export interface JiraIssue {
 
 export class JiraService {
   private httpClient: any;
-  private backendUrl: string;
+  private jiraUrl: string;
 
   constructor() {
-    this.backendUrl = this.getBackendUrl();
+    this.jiraUrl = this.getJiraUrl();
     this.httpClient = axios.create({
-      baseURL: this.backendUrl,
+      baseURL: `${this.jiraUrl}/rest/api/3`,
       timeout: 10000,
       headers: {
         'Content-Type': 'application/json',
       }
     });
 
-    const apiKey = this.getApiKey();
-    if (apiKey) {
-      this.httpClient.defaults.headers.common['Authorization'] = `Bearer ${apiKey}`;
+    const { email, apiToken } = this.getCredentials();
+    if (email && apiToken) {
+      const auth = Buffer.from(`${email}:${apiToken}`).toString('base64');
+      this.httpClient.defaults.headers.common['Authorization'] = `Basic ${auth}`;
     }
   }
 
-  private getBackendUrl(): string {
+  private getJiraUrl(): string {
     const config = vscode.workspace.getConfiguration('jiraTestGenerator');
-    return config.get<string>('backendUrl') || 'http://localhost:3000';
+    return config.get<string>('jiraUrl') || '';
   }
 
-  private getApiKey(): string | undefined {
+  private getCredentials(): { email: string; apiToken: string } {
     const config = vscode.workspace.getConfiguration('jiraTestGenerator');
-    return config.get<string>('apiKey');
+    return {
+      email: config.get<string>('email') || '',
+      apiToken: config.get<string>('apiToken') || ''
+    };
   }
 
   /**
-   * Obtiene una issue específica de Jira a través del backend
+   * Obtiene una issue específica de Jira directamente desde la API
    * @param issueKey La clave de la issue (ej: PROJ-123)
    * @returns Promise con los datos de la issue
    */
   async getIssue(issueKey: string): Promise<JiraIssue> {
     try {
-      const response = await this.httpClient.get(`/api/v1/jira/issues/${issueKey}`);
-      return response.data;
+      const response = await this.httpClient.get(`/issue/${issueKey}?expand=names`);
+
+      // Transformar la respuesta de Jira al formato esperado
+      const jiraData = response.data;
+      return {
+        id: jiraData.id,
+        key: jiraData.key,
+        summary: jiraData.fields.summary,
+        status: {
+          name: jiraData.fields.status.name,
+          statusCategory: jiraData.fields.status.statusCategory.name
+        },
+        priority: {
+          name: jiraData.fields.priority?.name || 'No Priority'
+        },
+        issueType: {
+          name: jiraData.fields.issuetype.name
+        },
+        reporter: {
+          displayName: jiraData.fields.reporter?.displayName || 'Unknown',
+          emailAddress: jiraData.fields.reporter?.emailAddress || ''
+        },
+        created: jiraData.fields.created,
+        updated: jiraData.fields.updated,
+        project: {
+          key: jiraData.fields.project.key,
+          name: jiraData.fields.project.name
+        },
+        description: jiraData.fields.description?.content?.[0]?.content?.[0]?.text || jiraData.renderedFields?.description || '',
+        assignee: jiraData.fields.assignee ? {
+          displayName: jiraData.fields.assignee.displayName,
+          emailAddress: jiraData.fields.assignee.emailAddress || ''
+        } : undefined
+      };
     } catch (error: any) {
       if (error.response) {
         // El servidor respondió con un código de error
-        throw new Error(`Error del backend: ${error.response.status} - ${error.response.data.message || error.response.statusText}`);
+        throw new Error(`Error de Jira API: ${error.response.status} - ${error.response.data?.errorMessages?.[0] || error.response.statusText}`);
       } else if (error.request) {
         // La petición fue hecha pero no se recibió respuesta
-        throw new Error(`No se pudo conectar al backend en ${this.backendUrl}. Verifica que esté ejecutándose.`);
+        throw new Error(`No se pudo conectar a Jira en ${this.jiraUrl}. Verifica la URL y tu conexión.`);
       } else {
         // Error en la configuración de la petición
         throw new Error(`Error en la petición: ${error.message}`);
@@ -86,19 +122,53 @@ export class JiraService {
   }
 
   /**
-   * Busca issues por proyecto
+   * Busca issues por proyecto usando Jira Search API
    * @param projectKey La clave del proyecto
    * @returns Promise con lista de issues
    */
   async getIssuesByProject(projectKey: string): Promise<JiraIssue[]> {
     try {
-      const response = await this.httpClient.get(`/api/v1/jira/project/${projectKey}/issues`);
-      return response.data;
+      const jql = `project = "${projectKey}" ORDER BY created DESC`;
+      const response = await this.httpClient.get(`/search?jql=${encodeURIComponent(jql)}&expand=names&maxResults=50`);
+
+      // Transformar la respuesta de Jira al formato esperado
+      const issues: JiraIssue[] = response.data.issues.map((jiraData: any) => ({
+        id: jiraData.id,
+        key: jiraData.key,
+        summary: jiraData.fields.summary,
+        status: {
+          name: jiraData.fields.status.name,
+          statusCategory: jiraData.fields.status.statusCategory.name
+        },
+        priority: {
+          name: jiraData.fields.priority?.name || 'No Priority'
+        },
+        issueType: {
+          name: jiraData.fields.issuetype.name
+        },
+        reporter: {
+          displayName: jiraData.fields.reporter?.displayName || 'Unknown',
+          emailAddress: jiraData.fields.reporter?.emailAddress || ''
+        },
+        created: jiraData.fields.created,
+        updated: jiraData.fields.updated,
+        project: {
+          key: jiraData.fields.project.key,
+          name: jiraData.fields.project.name
+        },
+        description: jiraData.fields.description?.content?.[0]?.content?.[0]?.text || jiraData.renderedFields?.description || '',
+        assignee: jiraData.fields.assignee ? {
+          displayName: jiraData.fields.assignee.displayName,
+          emailAddress: jiraData.fields.assignee.emailAddress || ''
+        } : undefined
+      }));
+
+      return issues;
     } catch (error: any) {
       if (error.response) {
-        throw new Error(`Error del backend: ${error.response.status} - ${error.response.data.message || error.response.statusText}`);
+        throw new Error(`Error de Jira API: ${error.response.status} - ${error.response.data?.errorMessages?.[0] || error.response.statusText}`);
       } else if (error.request) {
-        throw new Error(`No se pudo conectar al backend en ${this.backendUrl}. Verifica que esté ejecutándose.`);
+        throw new Error(`No se pudo conectar a Jira en ${this.jiraUrl}. Verifica la URL y tu conexión.`);
       } else {
         throw new Error(`Error en la petición: ${error.message}`);
       }
@@ -109,12 +179,13 @@ export class JiraService {
    * Actualiza la configuración del servicio (útil cuando el usuario cambia la configuración)
    */
   updateConfiguration(): void {
-    this.backendUrl = this.getBackendUrl();
-    this.httpClient.defaults.baseURL = this.backendUrl;
-    
-    const apiKey = this.getApiKey();
-    if (apiKey) {
-      this.httpClient.defaults.headers.common['Authorization'] = `Bearer ${apiKey}`;
+    this.jiraUrl = this.getJiraUrl();
+    this.httpClient.defaults.baseURL = `${this.jiraUrl}/rest/api/3`;
+
+    const { email, apiToken } = this.getCredentials();
+    if (email && apiToken) {
+      const auth = Buffer.from(`${email}:${apiToken}`).toString('base64');
+      this.httpClient.defaults.headers.common['Authorization'] = `Basic ${auth}`;
     } else {
       delete this.httpClient.defaults.headers.common['Authorization'];
     }
