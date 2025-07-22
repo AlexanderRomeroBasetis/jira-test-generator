@@ -1,14 +1,37 @@
 {
   "name": "jira-test-generator",
-  "displayName": "jira-test-generator",
-  "description": "",
+  "displayName": "Jira Test Generator",
+  "description": "Una extensión de VSCode que se conecta directamente a Jira para obtener información de issues y generar test cases automáticamente usando múltiples proveedores de IA.",
   "version": "0.0.1",
+  "publisher": "alexander-romero",
+  "author": {
+    "name": "Alexander Romero"
+  },
   "engines": {
     "vscode": "^1.102.0"
   },
   "categories": [
+    "Testing",
     "Other"
   ],
+  "keywords": [
+    "jira",
+    "test",
+    "testing",
+    "ai",
+    "gpt",
+    "claude",
+    "gemini",
+    "automation"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alexander-romero/jira-test-generator.git"
+  },
+  "bugs": {
+    "url": "https://github.com/alexander-romero/jira-test-generator/issues"
+  },
+  "homepage": "https://github.com/alexander-romero/jira-test-generator#readme",
   "activationEvents": [],
   "main": "./out/extension.js",
   "enabledApiProposals": [
@@ -18,7 +41,7 @@
     "commands": [
       {
         "command": "jira-test-generator.helloWorld",
-        "title": "Hello World"
+        "title": "JTG test"
       },
       {
         "command": "jira-test-generator.getJiraIssue",
@@ -26,11 +49,24 @@
       }
     ],
     "configuration": {
-      "title": "Jira Test Generator",
+      "title": "Configuration",
       "properties": {
         "jiraTestGenerator.jiraUrl": {
           "type": "string",
           "description": "URL de tu instancia de Jira (ej: https://tuempresa.atlassian.net)"
+        },
+        "jiraTestGenerator.apiToken": {
+          "type": "string",
+          "description": "API Token de Jira para autenticación (generar en Account Settings > Security > API tokens)"
+        },
+        "jiraTestGenerator.geminiApiKey": {
+          "type": "string",
+          "description": "URL de tu instancia de Jira (ej: https://tuempresa.atlassian.net)"
+          "description": "API Key de Google AI para usar Gemini (requerido si seleccionas Gemini)"
+        },
+        "jiraTestGenerator.anthropicApiKey": {
+          "type": "string",
+          "description": "API Key de Anthropic para usar Claude (requerido si seleccionas Claude Sonnet 4)"
         },
         "jiraTestGenerator.email": {
           "type": "string",
@@ -49,7 +85,8 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "pack": "vsce package"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",

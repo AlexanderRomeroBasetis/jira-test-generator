@@ -121,6 +121,30 @@ export class JiraService {
     }
   }
 
+  async addComment(issueKey: string, comment: string): Promise<void> {
+    try {
+      await this.httpClient.post(`/issue/${issueKey}/comment`, {
+        body: {
+          type: "doc",
+          version: 1,
+          content: [
+            {
+              type: "paragraph",
+              content: [
+                {
+                  type: "text",
+                  text: comment
+                }
+              ]
+            }
+          ]
+        }
+      });
+    } catch (error: any) {
+        throw new Error(`Error al agregar comentario: ${error.message}`);
+    }
+  }
+
   /**
    * Busca issues por proyecto usando Jira Search API
    * @param projectKey La clave del proyecto

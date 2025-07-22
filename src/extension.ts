@@ -36,9 +36,9 @@ export function activate(context: vscode.ExtensionContext) {
 			}, async (progress) => {
 				try {
 					progress.report({ increment: 0, message: `Buscando ${issueKey}...` });
-					
+
 					const issue = await jiraService.getIssue(issueKey);
-					
+
 					progress.report({ increment: 100, message: "¡Issue encontrada!" });
 
 					await showIssueDetails(issue);
@@ -76,6 +76,31 @@ async function showIssueDetails(issue: JiraIssue): Promise<void> {
 		}
 	);
 
+	// Manejar mensajes del webview
+	panel.webview.onDidReceiveMessage(
+		async message => {
+			switch (message.command) {
+				case 'addComment':
+					try {
+						// Formatear los test cases seleccionados como comentario
+						const commentText = formatTestCasesAsComment(message.testCases);
+
+						// Enviar comentario a Jira
+						await jiraService.addComment(message.issueKey, commentText);
+
+						vscode.window.showInformationMessage(
+							`Se enviaron ${message.testCases.length} test case(s) como comentario a ${message.issueKey}`
+						);
+					} catch (error: any) {
+						vscode.window.showErrorMessage(`Error al enviar comentario: ${error.message}`);
+					}
+					break;
+			}
+		},
+		undefined,
+		[]
+	);
+
 	// Mostrar HTML inicial con loading
 	panel.webview.html = getIssueWebviewContent(issue, [], true);
 
@@ -88,6 +113,25 @@ async function showIssueDetails(issue: JiraIssue): Promise<void> {
 		// Mostrar error en los test cases
 		panel.webview.html = getIssueWebviewContent(issue, [], false, error.message);
 	}
+}
+
+/**
+ * Formatea los test cases seleccionados como comentario para Jira
+ */
+function formatTestCasesAsComment(testCases: any[]): string {
+	let comment = "🤖 Test Cases Generados por AI\n\n";
+
+	testCases.forEach((testCase, index) => {
+		comment += `--- Test Case ${index + 1} ---\n`;
+		comment += `📋 ${testCase.title}\n\n`;
+		comment += `📝 Descripción:\n${testCase.description}\n\n`;
+		comment += `✅ Resultado Esperado:\n${testCase.result}\n\n`;
+		comment += "---\n\n";
+	});
+
+	comment += `Total de test cases: ${testCases.length}`;
+
+	return comment;
 }
 
 /**
@@ -109,14 +153,14 @@ function getIssueWebviewContent(issue: JiraIssue, testCases: TestCase[] = [], is
             background-color: var(--vscode-editor-background);
         }
         .header {
-            border-bottom: 2px solid #007acc;
+            border-bottom: 2px solid var(--vscode-editor-foreground);
             padding-bottom: 15px;
             margin-bottom: 25px;
         }
         .issue-key {
             font-size: 24px;
             font-weight: bold;
-            color: #4fc3f7;
+            color: var(--vscode-foreground);
             margin: 0;
         }
         .issue-summary {
@@ -143,7 +187,7 @@ function getIssueWebviewContent(issue: JiraIssue, testCases: TestCase[] = [], is
             background: var(--vscode-input-background);
             padding: 12px;
             border-radius: 4px;
-            border-left: 3px solid #007acc;
+            border-left: 3px solid var(--vscode-editor-foreground);
             border: 1px solid var(--vscode-input-border);
         }
         .description {
@@ -185,19 +229,17 @@ function getIssueWebviewContent(issue: JiraIssue, testCases: TestCase[] = [], is
         }
         .test-cases-section {
             margin-top: 30px;
-            border-top: 2px solid #007acc;
+            border-top: 2px solid var(--vscode-editor-foreground);
             padding-top: 20px;
         }
         .test-cases-header {
             font-size: 20px;
             font-weight: bold;
-            color: #4fc3f7;
+            color: var(--vscode-foreground);
             margin-bottom: 15px;
             display: flex;
             align-items: center;
-        }
-        .test-cases-header .icon {
-            margin-right: 8px;
+            gap: 10px;
         }
         .test-case {
             background: var(--vscode-input-background);
@@ -233,7 +275,7 @@ function getIssueWebviewContent(issue: JiraIssue, testCases: TestCase[] = [], is
             height: 16px;
             border: 2px solid var(--vscode-descriptionForeground);
             border-radius: 50%;
-            border-top-color: #4fc3f7;
+            border-top-color: var(--vscode-foreground);
             animation: spin 1s ease-in-out infinite;
             margin-right: 8px;
         }
@@ -248,6 +290,66 @@ function getIssueWebviewContent(issue: JiraIssue, testCases: TestCase[] = [], is
             border-radius: 4px;
             margin: 10px 0;
         }
+        .test-case-checkbox {
+            display: flex;
+            align-items: center;
+            margin-top: 15px;
+            padding: 12px;
+            border-top: 1px solid var(--vscode-input-border);
+            border-radius: 6px;
+            background: var(--vscode-input-background);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .test-case-checkbox:hover {
+            background: var(--vscode-list-hoverBackground);
+            border-color: var(--vscode-focusBorder);
+        }
+        .test-case-checkbox input[type="checkbox"] {
+            margin-right: 12px;
+            width: 18px;
+            height: 18px;
+            accent-color: var(--vscode-button-background);
+            cursor: pointer;
+        }
+        .test-case-checkbox label {
+            color: var(--vscode-foreground);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            user-select: none;
+            flex: 1;
+        }
+        .test-case-checkbox input[type="checkbox"]:checked + label {
+            color: var(--vscode-button-background);
+            font-weight: 600;
+        }
+        .send-button-container {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 2px solid var(--vscode-editor-foreground);
+        }
+        .send-button {
+            background: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .send-button:hover {
+            background: var(--vscode-button-hoverBackground);
+        }
+        .send-button:disabled {
+            background: var(--vscode-button-secondaryBackground);
+            color: var(--vscode-button-secondaryForeground);
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -256,7 +358,7 @@ function getIssueWebviewContent(issue: JiraIssue, testCases: TestCase[] = [], is
         <div class="issue-summary">${issue.summary}</div>
         <div class="project-info">Proyecto: ${issue.project.name} (${issue.project.key})</div>
     </div>
-    
+
     <div class="field">
         <span class="field-label">Información básica:</span>
         <div class="field-value">
@@ -267,14 +369,14 @@ function getIssueWebviewContent(issue: JiraIssue, testCases: TestCase[] = [], is
             </div>
         </div>
     </div>
-    
+
     ${issue.description ? `
     <div class="field">
         <span class="field-label">Descripción:</span>
         <div class="field-value description">${issue.description}</div>
     </div>
     ` : ''}
-    
+
     <div class="field">
         <span class="field-label">Reportado por:</span>
         <div class="field-value">
@@ -282,7 +384,7 @@ function getIssueWebviewContent(issue: JiraIssue, testCases: TestCase[] = [], is
             <span class="user-email">${issue.reporter.emailAddress}</span>
         </div>
     </div>
-    
+
     ${issue.assignee ? `
     <div class="field">
         <span class="field-label">Asignado a:</span>
@@ -292,7 +394,7 @@ function getIssueWebviewContent(issue: JiraIssue, testCases: TestCase[] = [], is
         </div>
     </div>
     ` : ''}
-    
+
     <div class="field">
         <span class="field-label">Fechas:</span>
         <div class="field-value">
@@ -305,10 +407,10 @@ function getIssueWebviewContent(issue: JiraIssue, testCases: TestCase[] = [], is
     <div class="test-cases-section">
         <div class="test-cases-header">
             <span class="icon">🤖</span>
-            Test Cases Generados
+            Test Cases
             ${isLoading ? '<div class="loading-spinner"></div>' : ''}
         </div>
-        
+
         ${isLoading ? `
             <div class="field-value">
                 <div>Generando test cases con AI...</div>
@@ -320,16 +422,21 @@ function getIssueWebviewContent(issue: JiraIssue, testCases: TestCase[] = [], is
         ` : testCases.length > 0 ? `
             ${testCases.map((testCase, index) => `
                 <div class="test-case">
-                    <div class="test-case-title">Test Case ${index + 1}: ${testCase.titulo}</div>
-                    
+                    <div class="test-case-title">Test Case ${index + 1}: ${testCase.title}</div>
+
                     <div class="test-case-section">
                         <div class="test-case-label">Descripción:</div>
-                        <div class="test-case-content">${testCase.descripcion}</div>
+                        <div class="test-case-content">${testCase.description}</div>
                     </div>
-                    
+
                     <div class="test-case-section">
                         <div class="test-case-label">Resultado Esperado:</div>
-                        <div class="test-case-content">${testCase.resultado}</div>
+                        <div class="test-case-content">${testCase.result}</div>
+                    </div>
+
+                    <div class="test-case-checkbox">
+                        <input type="checkbox" id="comment-${index}" name="comment-${index}">
+                        <label for="comment-${index}">Seleccionar</label>
                     </div>
                 </div>
             `).join('')}
@@ -339,6 +446,48 @@ function getIssueWebviewContent(issue: JiraIssue, testCases: TestCase[] = [], is
             </div>
         `}
     </div>
+
+    <!-- Botón Enviar -->
+    ${testCases.length > 0 ? `
+    <div class="send-button-container">
+        <button class="send-button" onclick="addComment('${issue.key}')">Enviar</button>
+    </div>
+    ` : ''}
+
+    <script>
+        const vscode = acquireVsCodeApi();
+
+        function addComment(issueKey) {
+            // Recopilar todos los test cases seleccionados
+            const selectedTestCases = [];
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+
+            checkboxes.forEach((checkbox, index) => {
+                const testCaseDiv = checkbox.closest('.test-case');
+                const title = testCaseDiv.querySelector('.test-case-title').textContent;
+                const description = testCaseDiv.querySelectorAll('.test-case-content')[0].textContent;
+                const result = testCaseDiv.querySelectorAll('.test-case-content')[1].textContent;
+
+                selectedTestCases.push({
+                    title: title,
+                    description: description,
+                    result: result
+                });
+            });
+
+            if (selectedTestCases.length === 0) {
+                alert('Por favor selecciona al menos un test case para enviar.');
+                return;
+            }
+
+            // Enviar mensaje al extension con los test cases seleccionados
+            vscode.postMessage({
+                command: 'addComment',
+                issueKey: issueKey,
+                testCases: selectedTestCases
+            });
+        }
+    </script>
 </body>
 </html>`;
 }
