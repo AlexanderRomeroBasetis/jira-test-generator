@@ -156,7 +156,7 @@ export class JiraService {
       const response = await this.httpClient.get(`/search?jql=${encodeURIComponent(jql)}&expand=names&maxResults=50`);
 
       // Transformar la respuesta de Jira al formato esperado
-      const issues: JiraIssue[] = response.data.issues.map((jiraData: any) => ({
+      return response.data.issues.map((jiraData: any) => ({
         id: jiraData.id,
         key: jiraData.key,
         summary: jiraData.fields.summary,
@@ -186,8 +186,6 @@ export class JiraService {
           emailAddress: jiraData.fields.assignee.emailAddress || ''
         } : undefined
       }));
-
-      return issues;
     } catch (error: any) {
       if (error.response) {
         throw new Error(`Error de Jira API: ${error.response.status} - ${error.response.data?.errorMessages?.[0] || error.response.statusText}`);

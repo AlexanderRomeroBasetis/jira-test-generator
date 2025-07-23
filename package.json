@@ -61,7 +61,6 @@
         },
         "jiraTestGenerator.geminiApiKey": {
           "type": "string",
-          "description": "URL de tu instancia de Jira (ej: https://tuempresa.atlassian.net)"
           "description": "API Key de Google AI para usar Gemini (requerido si seleccionas Gemini)"
         },
         "jiraTestGenerator.anthropicApiKey": {
@@ -71,10 +70,6 @@
         "jiraTestGenerator.email": {
           "type": "string",
           "description": "Tu email de Jira para autenticación"
-        },
-        "jiraTestGenerator.apiToken": {
-          "type": "string",
-          "description": "API Token de Jira para autenticación (generar en Account Settings > Security > API tokens)"
         }
       }
     }

@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 
 export interface TestCase {
-  titulo: string;
-  descripcion: string;
-  resultado: string;
+  title: string;
+  description: string;
+  result: string;
 }
 
 export class AIService {
@@ -114,22 +114,22 @@ Genera exactamente 3 test cases para esta issue siguiendo el formato especificad
   private parseTestCaseSection(section: string): TestCase | null {
     const lines = section.split('\n').map(line => line.trim());
     
-    let titulo = '';
-    let descripcion = '';
-    let resultado = '';
+    let title = '';
+    let description = '';
+    let result = '';
     
     for (const line of lines) {
       if (line.startsWith('TITULO:')) {
-        titulo = line.replace('TITULO:', '').trim();
+        title = line.replace('TITULO:', '').trim();
       } else if (line.startsWith('DESCRIPCION:')) {
-        descripcion = line.replace('DESCRIPCION:', '').trim();
+        description = line.replace('DESCRIPCION:', '').trim();
       } else if (line.startsWith('RESULTADO:')) {
-        resultado = line.replace('RESULTADO:', '').trim();
+        result = line.replace('RESULTADO:', '').trim();
       }
     }
     
-    if (titulo && descripcion && resultado) {
-      return { titulo, descripcion, resultado };
+    if (title && description && result) {
+      return { title, description, result };
     }
     
     return null;
@@ -144,9 +144,9 @@ Genera exactamente 3 test cases para esta issue siguiendo el formato especificad
     // Si el formato no es exacto, intentar generar test cases genéricos
     for (let i = 1; i <= 3; i++) {
       testCases.push({
-        titulo: `Test Case ${i}`,
-        descripcion: 'Test case generado automáticamente a partir de la respuesta de AI',
-        resultado: 'Resultado esperado según el análisis de AI'
+        title: `Test Case ${i}`,
+        description: 'Test case generado automáticamente a partir de la respuesta de AI',
+        result: 'Resultado esperado según el análisis de AI'
       });
     }
     
