@@ -5,7 +5,7 @@ Una extensión de VSCode que se conecta directamente a Jira para obtener informa
 ## 🚀 Características
 
 - ✅ **Conexión directa a Jira** - Sin necesidad de backend intermedio
-- ✅ **Múltiples proveedores de IA** - GPT-4.1, Claude Sonnet 4, y Gemini
+- ✅ **Múltiples proveedores de IA** - GitHub Copilot y Google Gemini
 - ✅ **Generación automática de test cases** - 3 casos de prueba por issue
 - ✅ **Interfaz visual elegante** - Panel interactivo para mostrar detalles
 - ✅ **Envío automático a Jira** - Los test cases se pueden enviar como comentarios
@@ -13,20 +13,15 @@ Una extensión de VSCode que se conecta directamente a Jira para obtener informa
 
 ## 🎯 Proveedores de IA Disponibles
 
-### GPT-4.1 (Por defecto)
+### GitHub Copilot (Por defecto)
 - **Requisitos**: GitHub Copilot activo en VS Code
-- **Configuración**: No requiere API key adicional
-- **Ventajas**: Integración nativa con VS Code
+- **Configuración**: No requiere configuración adicional
+- **Ventajas**: Integración nativa con VS Code, sin configuración externa
 
-### Claude Sonnet 4
-- **Requisitos**: API Key de Anthropic
-- **Modelo**: claude-3-5-sonnet-20241022
-- **Ventajas**: Excelente comprensión de contexto
-
-### Gemini
-- **Requisitos**: API Key de Google AI
-- **Modelo**: gemini-1.5-pro
-- **Ventajas**: Análisis avanzado y respuestas detalladas
+### Google Gemini
+- **Requisitos**: Gemini CLI instalado y configurado en el sistema
+- **Configuración**: No requiere API key (usa CLI local)
+- **Ventajas**: Análisis avanzado y respuestas detalladas, funciona offline una vez configurado
 
 ## 📖 Uso
 
@@ -59,10 +54,6 @@ Una extensión de VSCode que se conecta directamente a Jira para obtener informa
 #### Para usar GPT-4.1 (Por defecto)
 - **AI Provider**: Seleccionar "GPT-4.1"
 - **Requisito**: Tener GitHub Copilot activo en VS Code
-
-#### Para usar Claude Sonnet 4
-- **AI Provider**: Seleccionar "Claude Sonnet 4"
-- **Anthropic Api Key**: Agregar tu API Key de Anthropic
 
 #### Para usar Gemini
 - **AI Provider**: Seleccionar "Gemini"

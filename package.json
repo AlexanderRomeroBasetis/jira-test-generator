@@ -51,6 +51,16 @@
     "configuration": {
       "title": "Configuration",
       "properties": {
+        "jiraTestGenerator.aiProvider": {
+          "type": "string",
+          "enum": ["Copilot", "Gemini"],
+          "enumDescriptions": [
+            "GitHub Copilot (requiere suscripción activa)",
+            "Google Gemini CLI (requiere Gemini CLI instalado)"
+          ],
+          "default": "Copilot",
+          "description": "Selecciona el proveedor de IA para generar test cases"
+        },
         "jiraTestGenerator.jiraUrl": {
           "type": "string",
           "description": "URL de tu instancia de Jira (ej: https://tuempresa.atlassian.net)"
@@ -58,14 +68,6 @@
         "jiraTestGenerator.apiToken": {
           "type": "string",
           "description": "API Token de Jira para autenticación (generar en Account Settings > Security > API tokens)"
-        },
-        "jiraTestGenerator.geminiApiKey": {
-          "type": "string",
-          "description": "API Key de Google AI para usar Gemini (requerido si seleccionas Gemini)"
-        },
-        "jiraTestGenerator.anthropicApiKey": {
-          "type": "string",
-          "description": "API Key de Anthropic para usar Claude (requerido si seleccionas Claude Sonnet 4)"
         },
         "jiraTestGenerator.email": {
           "type": "string",
