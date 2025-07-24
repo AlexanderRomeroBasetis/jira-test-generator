@@ -70,17 +70,13 @@ export class AIService {
    */
   private async generateWithGemini(issue: any): Promise<TestCase[]> {
     try {
-      // Primero verificar si Gemini CLI está disponible
-      const isGeminiAvailable = await this.testGeminiCLI();
-      if (!isGeminiAvailable) {
-        throw new Error('Gemini CLI no está instalado o configurado. Por favor instala Gemini CLI y configúralo correctamente.');
+      const isGeminiReady = await this.testGeminiCLI();
+      if (!isGeminiReady) {
+        throw new Error('Gemini CLI no está instalado o la API Key no está configurada.');
       }
 
-      const systemPrompt = this.getSystemPrompt();
-      const userPrompt = this.buildIssuePrompt(issue);
-      const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
-
-      const response = await this.callGeminiCLI(fullPrompt);
+      const prompt = this.getSystemPrompt() + '\n\n' + this.buildIssuePrompt(issue);
+      const response = await this.callGeminiCLI(prompt);
       return this.parseTestCasesFromResponse(response);
 
     } catch (error: any) {
@@ -93,98 +89,70 @@ export class AIService {
    * Prueba si Gemini CLI está instalado y configurado
    */
   async testGeminiCLI(): Promise<boolean> {
+    const config = vscode.workspace.getConfiguration('jiraTestGenerator');
+    const apiKey = config.get<string>('gemini.apiKey');
+
+    if (!apiKey) {
+      vscode.window.showErrorMessage('La API Key de Gemini no está configurada. Por favor, configúrala en los ajustes de la extensión.');
+      return false;
+    }
+
     return new Promise((resolve) => {
-      try {
-        console.log('[DEBUG] Testing Gemini CLI availability...');
-
-        const geminiProcess = spawn('gemini', ['--version'], {
-          stdio: ['pipe', 'pipe', 'pipe'],
-          env: { ...process.env } // Ensure environment variables are passed
-        });
-
-        let hasOutput = false;
-        let stdoutData = '';
-        let stderrData = '';
-
-        geminiProcess.stdout.on('data', (data) => {
-          hasOutput = true;
-          stdoutData += data.toString();
-          console.log('[DEBUG] Gemini CLI stdout:', data.toString().trim());
-        });
-
-        geminiProcess.stderr.on('data', (data) => {
-          hasOutput = true;
-          stderrData += data.toString();
-          console.log('[DEBUG] Gemini CLI stderr:', data.toString().trim());
-        });
-
-        geminiProcess.on('close', (code) => {
-          console.log('[DEBUG] Gemini CLI exit code:', code);
-          console.log('[DEBUG] Has output:', hasOutput);
-
-          // CLI is available if it exits with code 0 OR produces any output (even error messages)
-          const isAvailable = code === 0 || hasOutput;
-          console.log('[DEBUG] Gemini CLI available:', isAvailable);
-          resolve(isAvailable);
-        });
-
-        geminiProcess.on('error', (error) => {
-          console.log('[DEBUG] Gemini CLI process error:', error.message);
-          resolve(false);
-        });
-
-        // Timeout de 10 segundos para la prueba (aumentado)
-        setTimeout(() => {
-          console.log('[DEBUG] Gemini CLI test timeout reached');
-          geminiProcess.kill();
-          resolve(false);
-        }, 10000);
-
-      } catch (error: any) {
-        console.log('[DEBUG] Gemini CLI test catch error:', error.message);
+      const gemini = spawn('gemini', ['--version']);
+      gemini.on('error', () => {
+        vscode.window.showErrorMessage('El CLI de Gemini no está instalado. Por favor, sigue las instrucciones de instalación.');
         resolve(false);
-      }
+      });
+      gemini.on('exit', (code) => {
+        if (code !== 0) {
+          vscode.window.showErrorMessage('El CLI de Gemini no funciona correctamente.');
+        }
+        resolve(code === 0);
+      });
     });
   }
 
   /**
-   * Llama al CLI de Gemini usando child_process (sin API Key)
+   * Llama al CLI de Gemini
    */
   private async callGeminiCLI(prompt: string): Promise<string> {
+    const config = vscode.workspace.getConfiguration('jiraTestGenerator');
+    const apiKey = config.get<string>('gemini.apiKey');
+
+    if (!apiKey) {
+      throw new Error('API Key de Gemini no encontrada.');
+    }
+
     return new Promise((resolve, reject) => {
-      // Usar el CLI de Gemini con el flag --prompt
-      const geminiProcess = spawn('gemini', ['--prompt', prompt], {
-        stdio: ['pipe', 'pipe', 'pipe']
+      // Pasar la API key como una variable de entorno al proceso hijo
+      const env = { ...process.env, GOOGLE_API_KEY: apiKey };
+      const gemini = spawn('gemini', ['-p', prompt], { env });
+
+      let stdout = '';
+      let stderr = '';
+
+      gemini.stdout.on('data', (data) => {
+        stdout += data.toString();
       });
 
-      let output = '';
-      let errorOutput = '';
-
-      geminiProcess.stdout.on('data', (data) => {
-        output += data.toString();
+      gemini.stderr.on('data', (data) => {
+        stderr += data.toString();
       });
 
-      geminiProcess.stderr.on('data', (data) => {
-        errorOutput += data.toString();
-      });
-
-      geminiProcess.on('close', (code) => {
-        if (code === 0 && output.trim()) {
-          resolve(output.trim());
+      gemini.on('close', (code) => {
+        if (code !== 0) {
+          console.error(`Gemini CLI exited with code ${code}`);
+          console.error(stderr);
+          reject(new Error(`Gemini CLI falló con código ${code}.`));
         } else {
-          reject(new Error(`Gemini CLI falló con código ${code}: ${errorOutput || 'Sin salida'}`));
+          resolve(stdout);
         }
       });
 
-      geminiProcess.on('error', (error) => {
-        reject(new Error(`Error ejecutando Gemini CLI: ${error.message}`));
+      gemini.on('error', (err) => {
+        console.error('Failed to start Gemini CLI process.', err);
+        reject(new Error('No se pudo iniciar el proceso de Gemini CLI.'));
       });
-
-      // Timeout de 30 segundos
-      setTimeout(() => {
-        geminiProcess.kill();
-        reject(new Error('Timeout: Gemini CLI tardó demasiado en responder'));
-      }, 30000);
     });
   }
 
@@ -192,12 +160,12 @@ export class AIService {
    * Obtiene el prompt del sistema
    */
   private getSystemPrompt(): string {
-    return `Eres un experto en QA. Analiza esta issue de Jira y genera exactamente 3 test cases a partir de ella. Considera analizar el código del proyecto ya que tienes acceso a él. Sobretodo sé estricto con el formato.
+    return `Eres un experto en QA. Analiza esta issue de Jira y genera de 3 a 6 test cases a partir de ella. Considera analizar el código del proyecto ya que tienes acceso a él. Sobretodo sé estricto con el formato.
 
 Formato requerido:
 TITULO: [breve y claro]
-DESCRIPCION: [detallada, qué testear y por qué]
-RESULTADO: [qué se espera]
+DESCRIPCIÓN: [detallada, qué testear y por qué, mínimo 50 palabras]
+RESULTADO: [qué se espera que devuelva el test al ejecutarse]
 ---
 [repetir para cada test case]`;
   }
@@ -237,7 +205,7 @@ Genera exactamente 3 test cases para esta issue siguiendo el formato especificad
     }
 
     // Si no pudimos parsear correctamente, intentar un método alternativo
-    if (testCases.length === 0) {
+    if (testCases.length === 0 && response.length > 0) {
       return this.parseTestCasesAlternative(response);
     }
 
@@ -249,21 +217,50 @@ Genera exactamente 3 test cases para esta issue siguiendo el formato especificad
    * Parsea una sección individual de test case
    */
   private parseTestCaseSection(section: string): TestCase | null {
-    const lines = section.split('\n').map(line => line.trim());
+    // Limpiar la sección de encabezados markdown y asteriscos alrededor de las etiquetas
+    const cleanSection = section
+      .replace(/###.*$/gm, '') // Eliminar encabezados ###
+      .replace(/\*\*(TITULO:|DESCRIPCI[OÓ]N:|RESULTADO:)\*\*/gi, '$1') // Eliminar ** de las etiquetas
+      .trim();
+
+    const lines = cleanSection.split('\n');
 
     let title = '';
     let description = '';
     let result = '';
 
+    let currentField: 'title' | 'description' | 'result' | null = null;
+    const content: { title: string[], description: string[], result: string[] } = {
+      title: [],
+      description: [],
+      result: []
+    };
+
     for (const line of lines) {
-      if (line.startsWith('TITULO:')) {
-        title = line.replace('TITULO:', '').trim();
-      } else if (line.startsWith('DESCRIPCION:')) {
-        description = line.replace('DESCRIPCION:', '').trim();
-      } else if (line.startsWith('RESULTADO:')) {
-        result = line.replace('RESULTADO:', '').trim();
-      }
+        const trimmedLine = line.trim();
+        if (trimmedLine.length === 0) continue;
+
+        const upperLine = trimmedLine.toUpperCase();
+
+        if (upperLine.startsWith('TITULO:')) {
+            currentField = 'title';
+            content.title.push(trimmedLine.substring('TITULO:'.length).trim());
+        } else if (upperLine.startsWith('DESCRIPCIÓN:') || upperLine.startsWith('DESCRIPCION:')) {
+            currentField = 'description';
+            const label = upperLine.startsWith('DESCRIPCIÓN:') ? 'DESCRIPCIÓN:' : 'DESCRIPCION:';
+            content.description.push(trimmedLine.substring(label.length).trim());
+        } else if (upperLine.startsWith('RESULTADO:')) {
+            currentField = 'result';
+            content.result.push(trimmedLine.substring('RESULTADO:'.length).trim());
+        } else if (currentField) {
+            // Añadir a campo actual si es un valor multilínea
+            content[currentField].push(trimmedLine);
+        }
     }
+
+    title = content.title.join('\n').trim();
+    description = content.description.join('\n').trim();
+    result = content.result.join('\n').trim();
 
     if (title && description && result) {
       return { title, description, result };
@@ -277,7 +274,7 @@ Genera exactamente 3 test cases para esta issue siguiendo el formato especificad
    */
   private parseTestCasesAlternative(response: string): TestCase[] {
     const testCases: TestCase[] = [];
-    console.log(response);
+    console.error("Respuesta de la IA que no se pudo parsear:", response);
     // Si el formato no es exacto, intentar generar test cases genéricos
     for (let i = 1; i <= 3; i++) {
       testCases.push({

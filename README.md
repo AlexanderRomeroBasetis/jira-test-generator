@@ -19,67 +19,64 @@ Una extensión de VSCode que se conecta directamente a Jira para obtener informa
 - **Ventajas**: Integración nativa con VS Code, sin configuración externa
 
 ### Google Gemini
-- **Requisitos**: Gemini CLI instalado y configurado en el sistema
-- **Configuración**: No requiere API key (usa CLI local)
-- **Ventajas**: Análisis avanzado y respuestas detalladas, funciona offline una vez configurado
+- **Requisitos**: [Gemini CLI](https://ai.google.dev/docs/gemini_cli_quickstart) instalado en el sistema.
+- **Configuración**: Requiere una API Key de Google Gemini configurada en los ajustes de la extensión.
+- **Ventajas**: Utiliza el poder del CLI para análisis avanzados y respuestas detalladas.
 
 ## 📖 Uso
 
-1. **Configurar la extensión** (ver sección de Configuración)
-2. Abrir Command Palette (`Cmd+Shift+P` / `Ctrl+Shift+P`)
-3. Buscar "Get Jira Issue"
-4. Ingresar la clave de la issue (ej: `PROJ-123`)
-5. Esperar a que se generen los test cases automáticamente
-6. Revisar y seleccionar los test cases deseados
-7. Enviar como comentario a Jira (opcional)
+1. **Configurar la extensión** (ver sección de Configuración).
+2. Abrir la paleta de comandos (`Cmd+Shift+P` / `Ctrl+Shift+P`).
+3. Buscar y ejecutar **"Jira Test Generator: Get Jira Issue"**.
+4. Ingresar la clave de la issue (ej: `PROJ-123`).
+5. La extensión obtendrá los detalles de la issue y generará 3 casos de prueba.
+6. Revisa los casos de prueba en el panel que aparecerá.
+7. Puedes enviar los casos de prueba como un comentario a la issue de Jira directamente desde el panel.
 
 ## ⚙️ Configuración
 
 ### Configuración de Jira (Requerida)
 
-1. Ir a **VS Code Settings** → **Extensions** → **Jira Test Generator**
-2. Configurar los siguientes campos:
+1.  Ir a **VS Code Settings** → **Extensions** → **Jira Test Generator**.
+2.  Configurar los siguientes campos:
+    *   **Jira Url**: La URL de tu instancia de Jira (ej: `https://tuempresa.atlassian.net`).
+    *   **Email**: Tu email de Jira usado para la autenticación.
+    *   **Api Token**: Tu token de API de Jira.
 
-- **Jira Url**: URL de tu instancia de Jira (ej: `https://tuempresa.atlassian.net`)
-- **Email**: Tu email de Jira para autenticación
-- **Api Token**: Token de API de Jira
+#### ¿Cómo obtener el API Token de Jira?
 
-#### Cómo obtener el API Token de Jira:
-1. Ir a [Atlassian Account Settings](https://id.atlassian.com/manage-profile/security/api-tokens)
-2. Crear un nuevo API Token
-3. Copiar el token generado
+1.  Ve a tu [configuración de cuenta de Atlassian](https://id.atlassian.com/manage-profile/security/api-tokens).
+2.  Haz clic en **"Create API token"**.
+3.  Copia el token generado y pégalo en la configuración de la extensión.
 
 ### Configuración de Proveedores de IA
 
-#### Para usar GPT-4.1 (Por defecto)
-- **AI Provider**: Seleccionar "GPT-4.1"
-- **Requisito**: Tener GitHub Copilot activo en VS Code
+Desde la misma sección de configuración, puedes elegir tu proveedor de IA preferido.
 
-#### Para usar Gemini
-- **AI Provider**: Seleccionar "Gemini"
-- **Gemini Api Key**: Agregar tu API Key de Google AI
+#### Para usar GitHub Copilot (Opción por defecto)
 
-### Cómo obtener API Keys
+-   **AI Provider**: Seleccionar `"Copilot"`.
+-   **Requisito**: Debes tener una suscripción de GitHub Copilot activa en VS Code.
 
-#### Claude (Anthropic)
-1. Ir a [Anthropic Console](https://console.anthropic.com/)
-2. Crear cuenta o iniciar sesión
-3. Navegar a **API Keys** → **Create Key**
-4. Copiar la API Key generada
+#### Para usar Google Gemini
 
-#### Gemini (Google AI)
-1. Ir a [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Crear proyecto o seleccionar existente
-3. **Generate API Key**
-4. Copiar la API Key generada
+-   **AI Provider**: Seleccionar `"Gemini"`.
+-   **Requisito 1**: Instalar el [CLI de Gemini](https://ai.google.dev/docs/gemini_cli_quickstart) en tu sistema.
+-   **Requisito 2**: Configurar tu API Key de Gemini en el campo **"Gemini Api Key"**.
+
+##### ¿Cómo obtener la API Key de Gemini?
+
+1.  Ve a [Google AI Studio](https://aistudio.google.com/app/apikey).
+2.  Crea un nuevo proyecto o selecciona uno existente.
+3.  Haz clic en **"Create API key"**.
+4.  Copia la clave generada y pégala en la configuración de la extensión.
 
 ## 🔧 Requisitos
 
-- **VS Code**: 1.102.0 o superior
-- **Para GPT-4.1**: GitHub Copilot activo
-- **Para Claude**: API Key de Anthropic válida
-- **Para Gemini**: API Key de Google AI válida
-- **Conexión a internet** para acceder a Jira y APIs de IA
+-   **VS Code**: `1.102.0` o superior.
+-   **Para usar Copilot**: Suscripción de GitHub Copilot activa.
+-   **Para usar Gemini**: [CLI de Gemini](https://ai.google.dev/docs/gemini_cli_quickstart) instalado y una API Key de Google AI.
+-   Conexión a internet para acceder a Jira y a las APIs de IA.
 
 ## 📦 Instalación
 
