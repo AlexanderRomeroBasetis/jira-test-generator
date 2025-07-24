@@ -2,7 +2,8 @@
   "name": "jira-test-generator",
   "displayName": "Jira Test Generator",
   "description": "Una extensión de VSCode que se conecta directamente a Jira para obtener información de issues y generar test cases automáticamente usando múltiples proveedores de IA.",
-  "version": "0.0.1",
+  "version": "1.0",
+  "icon": "logo.png",
   "publisher": "alexander-romero",
   "author": {
     "name": "Alexander Romero"
@@ -72,6 +73,10 @@
         "jiraTestGenerator.email": {
           "type": "string",
           "description": "Tu email de Jira para autenticación"
+        },
+        "jiraTestGenerator.gemini.apiKey": {
+          "type": "string",
+          "description": "API Key de Google Gemini para la generación de test cases. La clave se almacenará de forma segura."
         }
       }
     }
@@ -83,7 +88,7 @@
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
     "test": "vscode-test",
-    "pack": "vsce package"
+    "pack": "npm run compile && vsce package"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
