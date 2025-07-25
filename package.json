@@ -2,7 +2,7 @@
   "name": "jira-test-generator",
   "displayName": "Jira Test Generator",
   "description": "Una extensión de VSCode que se conecta directamente a Jira para obtener información de issues y generar test cases automáticamente usando múltiples proveedores de IA.",
-  "version": "1.0",
+  "version": "1.0.0",
   "icon": "logo.png",
   "publisher": "alexander-romero",
   "author": {

@@ -161,13 +161,13 @@ export class AIService {
    */
   private getSystemPrompt(): string {
     return `Eres un experto en QA. Analiza esta issue de Jira y genera de 3 a 6 test cases a partir de ella. Considera analizar el código del proyecto ya que tienes acceso a él. Sobretodo sé estricto con el formato.
-
-Formato requerido:
-TITULO: [breve y claro]
-DESCRIPCIÓN: [detallada, qué testear y por qué, mínimo 50 palabras]
-RESULTADO: [qué se espera que devuelva el test al ejecutarse]
----
-[repetir para cada test case]`;
+            Formato requerido:
+            TITULO: [breve y claro]
+            DESCRIPCIÓN: [detallada, qué testear y por qué, mínimo 50 palabras]
+            RESULTADO: [qué se espera que devuelva el test al ejecutarse]
+            TIPO: 
+            ---
+            [repetir para cada test case]`;
   }
 
   /**
@@ -175,15 +175,15 @@ RESULTADO: [qué se espera que devuelva el test al ejecutarse]
    */
   private buildIssuePrompt(issue: any): string {
     return `Issue de Jira:
-Key: ${issue.key}
-Título: ${issue.summary}
-Tipo: ${issue.issueType.name}
-Estado: ${issue.status.name}
-Prioridad: ${issue.priority.name}
-Proyecto: ${issue.project.name} (${issue.project.key})
-${issue.description ? `Descripción: ${issue.description}` : ''}
-
-Genera exactamente 3 test cases para esta issue siguiendo el formato especificado.`;
+            Key: ${issue.key}
+            Título: ${issue.summary}
+            Tipo: ${issue.issueType.name}
+            Estado: ${issue.status.name}
+            Prioridad: ${issue.priority.name}
+            Proyecto: ${issue.project.name} (${issue.project.key})
+            ${issue.description ? `Descripción: ${issue.description}` : ''}
+            
+            Genera exactamente 3 test cases para esta issue siguiendo el formato especificado.`;
   }
 
   /**
