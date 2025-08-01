@@ -276,7 +276,6 @@ export class AIService {
           // Añadir a campo actual si es un valor multilínea
           content[currentField].push(trimmedLine);
         }
-
     }
 
     title = content.title.join('\n').trim();
@@ -284,7 +283,12 @@ export class AIService {
     description = content.description.join('\n').trim();
     result = content.result.join('\n').trim();
 
-    if (title && type && description && result) {
+    if (
+        title &&
+        (type === 'Web' || type === 'Api' || type === 'Error') &&
+        description &&
+        result
+    ) {
       return { title, type, description, result };
     }
 
