@@ -3,6 +3,7 @@ import { spawn } from 'child_process';
 
 export interface TestCase {
   title: string;
+  type: 'Web' | 'Api' | 'Error';
   description: string;
   result: string;
 }
@@ -14,11 +15,11 @@ export class AIService {
    */
   async generateTestCases(issue: any): Promise<TestCase[]> {
     const config = vscode.workspace.getConfiguration('jiraTestGenerator');
-    const aiProvider = config.get<string>('aiProvider', 'copilot');
+    const aiProvider = config.get<string>('aiProvider', 'Gemini');
 
     switch (aiProvider) {
-      case 'Copilot':
-        return this.generateWithCopilot(issue);
+      // case 'Copilot':
+      //   return this.generateWithCopilot(issue);
       case 'Gemini':
         return this.generateWithGemini(issue);
       default:
@@ -28,7 +29,10 @@ export class AIService {
 
   /**
    * Genera test cases usando GitHub Copilot
+   * COMENTADO: Funcionalidad deshabilitada, solo Gemini disponible
+   * Mantener para futura integración
    */
+  /*
   private async generateWithCopilot(issue: any): Promise<TestCase[]> {
     try {
       const models = await vscode.lm.selectChatModels({
@@ -64,6 +68,7 @@ export class AIService {
       throw new Error(`Error al generar test cases con Copilot: ${error.message}`);
     }
   }
+  */
 
   /**
    * Genera test cases usando Gemini CLI
@@ -160,14 +165,25 @@ export class AIService {
    * Obtiene el prompt del sistema
    */
   private getSystemPrompt(): string {
-    return `Eres un experto en QA. Analiza esta issue de Jira y genera de 3 a 6 test cases a partir de ella. Considera analizar el código del proyecto ya que tienes acceso a él. Sobretodo sé estricto con el formato.
-            Formato requerido:
-            TITULO: [breve y claro]
-            DESCRIPCIÓN: [detallada, qué testear y por qué, mínimo 50 palabras]
-            RESULTADO: [qué se espera que devuelva el test al ejecutarse]
-            TIPO: 
-            ---
-            [repetir para cada test case]`;
+    return `
+          ## Rol
+          Actúa como un **experto en aseguramiento de calidad (QA)** con certificación ISTQB y experiencia en validaciones funcionales de interfaz de usuario en entornos web.
+
+          ## Objetivo
+          Analiza esta issue de Jira y genera de 1 a 6 test cases a partir de ella.
+          Considera analizar el código del proyecto ya que tienes acceso a él. Sobretodo sé estricto con el formato.
+
+          ## Contexto
+          - **Categoría:** Web
+          - **Tipo de validación:** Funcional (Frontend)
+          - **Foco:** UI, interacciones del usuario, validaciones visuales, estados de componentes
+
+          Formato requerido:
+          TITULO: [breve y claro]
+          DESCRIPCIÓN: [detallada, qué testear y por qué, mínimo 50 palabras]
+          RESULTADO: [qué se espera que devuelva el test al ejecutarse]
+          ---
+          [repetir para cada test case]`;
   }
 
   /**
@@ -182,8 +198,8 @@ export class AIService {
             Prioridad: ${issue.priority.name}
             Proyecto: ${issue.project.name} (${issue.project.key})
             ${issue.description ? `Descripción: ${issue.description}` : ''}
-            
-            Genera exactamente 3 test cases para esta issue siguiendo el formato especificado.`;
+
+            Genera de 3 a 6 test cases para esta issue siguiendo el formato especificado.`;
   }
 
   /**
@@ -209,8 +225,7 @@ export class AIService {
       return this.parseTestCasesAlternative(response);
     }
 
-    // Limitar a exactamente 3 test cases
-    return testCases.slice(0, 3);
+    return testCases
   }
 
   /**
@@ -220,18 +235,20 @@ export class AIService {
     // Limpiar la sección de encabezados markdown y asteriscos alrededor de las etiquetas
     const cleanSection = section
       .replace(/###.*$/gm, '') // Eliminar encabezados ###
-      .replace(/\*\*(TITULO:|DESCRIPCI[OÓ]N:|RESULTADO:)\*\*/gi, '$1') // Eliminar ** de las etiquetas
+      .replace(/\*\*(TITULO:|DESCRIPCI[OÓ]N:|RESULTADO:|TIPO:)\*\*/gi, '$1') // Eliminar ** de las etiquetas
       .trim();
 
     const lines = cleanSection.split('\n');
 
     let title = '';
+    let type = '';
     let description = '';
     let result = '';
 
-    let currentField: 'title' | 'description' | 'result' | null = null;
-    const content: { title: string[], description: string[], result: string[] } = {
+    let currentField: 'title' | 'type' | 'description' | 'result' | null = null;
+    const content: { title: string[], type: string[], description: string[], result: string[] } = {
       title: [],
+      type: [],
       description: [],
       result: []
     };
@@ -252,18 +269,23 @@ export class AIService {
         } else if (upperLine.startsWith('RESULTADO:')) {
             currentField = 'result';
             content.result.push(trimmedLine.substring('RESULTADO:'.length).trim());
+        } else if (upperLine.startsWith('TIPO:')) {
+          currentField = 'type';
+          content.type.push(trimmedLine.substring('TIPO:'.length).trim());
         } else if (currentField) {
-            // Añadir a campo actual si es un valor multilínea
-            content[currentField].push(trimmedLine);
+          // Añadir a campo actual si es un valor multilínea
+          content[currentField].push(trimmedLine);
         }
+
     }
 
     title = content.title.join('\n').trim();
+    type = content.type.join('\n').trim();
     description = content.description.join('\n').trim();
     result = content.result.join('\n').trim();
 
-    if (title && description && result) {
-      return { title, description, result };
+    if (title && type && description && result) {
+      return { title, type, description, result };
     }
 
     return null;
@@ -279,6 +301,7 @@ export class AIService {
     for (let i = 1; i <= 3; i++) {
       testCases.push({
         title: `Test Case ${i}`,
+        type: 'Error',
         description: 'Test case generado automáticamente a partir de la respuesta de AI',
         result: 'Resultado esperado según el análisis de AI'
       });

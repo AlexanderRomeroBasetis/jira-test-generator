@@ -35,9 +35,7 @@
   "homepage": "https://github.com/alexander-romero/jira-test-generator#readme",
   "activationEvents": [],
   "main": "./out/extension.js",
-  "enabledApiProposals": [
-    "languageModelSystem"
-  ],
+  "enabledApiProposals": [],
   "contributes": {
     "commands": [
       {
@@ -54,13 +52,12 @@
       "properties": {
         "jiraTestGenerator.aiProvider": {
           "type": "string",
-          "enum": ["Copilot", "Gemini"],
+          "enum": ["Gemini"],
           "enumDescriptions": [
-            "GitHub Copilot (requiere suscripción activa)",
             "Google Gemini CLI (requiere Gemini CLI instalado)"
           ],
-          "default": "Copilot",
-          "description": "Selecciona el proveedor de IA para generar test cases"
+          "default": "Gemini",
+          "description": "Proveedor de IA para generar test cases (solo Gemini disponible)"
         },
         "jiraTestGenerator.jiraUrl": {
           "type": "string",

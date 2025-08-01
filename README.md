@@ -1,22 +1,17 @@
 # Jira Test Generator - VSCode Extension
 
-Una extensión de VSCode que se conecta directamente a Jira para obtener información de issues y generar test cases automáticamente usando múltiples proveedores de IA.
+Una extensión de VSCode que se conecta directamente a Jira para obtener información de issues y generar test cases automáticamente usando Google Gemini.
 
 ## 🚀 Características
 
 - ✅ **Conexión directa a Jira** - Sin necesidad de backend intermedio
-- ✅ **Múltiples proveedores de IA** - GitHub Copilot y Google Gemini
+- ✅ **Integración con Google Gemini** - Generación inteligente de test cases
 - ✅ **Generación automática de test cases** - 3 casos de prueba por issue
 - ✅ **Interfaz visual elegante** - Panel interactivo para mostrar detalles
 - ✅ **Envío automático a Jira** - Los test cases se pueden enviar como comentarios
-- ✅ **Configuración flexible** - Cambio dinámico entre proveedores de IA
+- ✅ **Configuración flexible** - Configuración sencilla de Google Gemini
 
-## 🎯 Proveedores de IA Disponibles
-
-### GitHub Copilot (Por defecto)
-- **Requisitos**: GitHub Copilot activo en VS Code
-- **Configuración**: No requiere configuración adicional
-- **Ventajas**: Integración nativa con VS Code, sin configuración externa
+## 🎯 Proveedor de IA
 
 ### Google Gemini
 - **Requisitos**: [Gemini CLI](https://ai.google.dev/docs/gemini_cli_quickstart) instalado en el sistema.
@@ -49,20 +44,12 @@ Una extensión de VSCode que se conecta directamente a Jira para obtener informa
 2.  Haz clic en **"Create API token"**.
 3.  Copia el token generado y pégalo en la configuración de la extensión.
 
-### Configuración de Proveedores de IA
+### Configuración de Google Gemini (Requerida)
 
-Desde la misma sección de configuración, puedes elegir tu proveedor de IA preferido.
+Para usar Google Gemini como proveedor de IA:
 
-#### Para usar GitHub Copilot (Opción por defecto)
-
--   **AI Provider**: Seleccionar `"Copilot"`.
--   **Requisito**: Debes tener una suscripción de GitHub Copilot activa en VS Code.
-
-#### Para usar Google Gemini
-
--   **AI Provider**: Seleccionar `"Gemini"`.
 -   **Requisito 1**: Instalar el [CLI de Gemini](https://ai.google.dev/docs/gemini_cli_quickstart) en tu sistema.
--   **Requisito 2**: Configurar tu API Key de Gemini en el campo **"Gemini Api Key"**.
+-   **Requisito 2**: Configurar tu API Key de Gemini en el campo **"Gemini Api Key"** en los ajustes de la extensión.
 
 ##### ¿Cómo obtener la API Key de Gemini?
 
@@ -74,9 +61,9 @@ Desde la misma sección de configuración, puedes elegir tu proveedor de IA pref
 ## 🔧 Requisitos
 
 -   **VS Code**: `1.102.0` o superior.
--   **Para usar Copilot**: Suscripción de GitHub Copilot activa.
--   **Para usar Gemini**: [CLI de Gemini](https://ai.google.dev/docs/gemini_cli_quickstart) instalado y una API Key de Google AI.
--   Conexión a internet para acceder a Jira y a las APIs de IA.
+-   **Gemini CLI**: [CLI de Gemini](https://ai.google.dev/docs/gemini_cli_quickstart) instalado en el sistema.
+-   **API Key de Google AI**: Una clave de API válida de Google AI.
+-   Conexión a internet para acceder a Jira y a la API de Gemini.
 
 ## 📦 Instalación
 
@@ -116,14 +103,14 @@ RESULTADO: No debe haber conflictos con funcionalidades existentes
 
 ## 🐛 Troubleshooting
 
-### Error: "No hay modelos de Copilot disponibles"
-- **Solución**: Asegúrate de tener GitHub Copilot activo y una suscripción válida
-
-### Error: "API Key de Anthropic no configurada"
-- **Solución**: Ve a la configuración de la extensión y agrega tu API Key de Anthropic
+### Error: "Gemini CLI no está instalado o la API Key no está configurada"
+- **Solución**: Asegúrate de tener el CLI de Gemini instalado y una API Key válida configurada
 
 ### Error: "API Key de Google AI no configurada"
 - **Solución**: Ve a la configuración de la extensión y agrega tu API Key de Google AI
+
+### Error: "El CLI de Gemini no funciona correctamente"
+- **Solución**: Verifica que el CLI de Gemini esté instalado correctamente ejecutando `gemini --version` en tu terminal
 
 ### Error: "Error de Jira API: 401"
 - **Solución**: Verifica que tu email y API Token de Jira sean correctos
@@ -131,14 +118,6 @@ RESULTADO: No debe haber conflictos con funcionalidades existentes
 ### Error: "No se pudo conectar a Jira"
 - **Solución**: Verifica que la URL de Jira sea correcta y tengas conexión a internet
 
-## 🔄 Cambio de Proveedores de IA
-
-Los cambios de configuración se aplican automáticamente sin necesidad de reiniciar VS Code:
-
-1. Ve a Settings → Extensions → Jira Test Generator
-2. Cambia el "AI Provider" al deseado
-3. Agrega la API Key correspondiente si es necesario
-4. ¡Listo! El próximo test case usará el nuevo proveedor
 
 ## 🤝 Contribuir
 
