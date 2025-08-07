@@ -80,6 +80,21 @@ async function showIssueDetails(issue: JiraIssue): Promise<void> {
 	panel.webview.onDidReceiveMessage(
 		async message => {
 			switch (message.command) {
+				case 'generateTestCases':
+					try {
+						// Mostrar estado de carga
+						panel.webview.html = getIssueWebviewContent(issue, [], true, undefined, message.testType);
+
+						// Generar test cases con el tipo seleccionado
+						const testCases = await aiService.generateTestCases(issue, message.testType);
+
+						// Actualizar el panel con los test cases generados
+						panel.webview.html = getIssueWebviewContent(issue, testCases, false, undefined, message.testType);
+					} catch (error: any) {
+						// Mostrar error en los test cases
+						panel.webview.html = getIssueWebviewContent(issue, [], false, error.message, message.testType);
+					}
+					break;
 				case 'addComment':
 					try {
 						// Formatear los test cases seleccionados como comentario
@@ -101,18 +116,8 @@ async function showIssueDetails(issue: JiraIssue): Promise<void> {
 		[]
 	);
 
-	// Mostrar HTML inicial con loading
-	panel.webview.html = getIssueWebviewContent(issue, [], true);
-
-	// Generar test cases en background
-	try {
-		const testCases = await aiService.generateTestCases(issue);
-		// Actualizar el panel con los test cases generados
-		panel.webview.html = getIssueWebviewContent(issue, testCases, false);
-	} catch (error: any) {
-		// Mostrar error en los test cases
-		panel.webview.html = getIssueWebviewContent(issue, [], false, error.message);
-	}
+	// Mostrar HTML inicial sin generar test cases automáticamente
+	panel.webview.html = getIssueWebviewContent(issue, [], false);
 }
 
 /**
@@ -137,7 +142,7 @@ function formatTestCasesAsComment(testCases: any[]): string {
 /**
  * Genera el contenido HTML para mostrar los detalles de la issue
  */
-function getIssueWebviewContent(issue: JiraIssue, testCases: TestCase[] = [], isLoading: boolean = false, error?: string): string {
+function getIssueWebviewContent(issue: JiraIssue, testCases: TestCase[] = [], isLoading: boolean = false, error?: string, selectedTestType?: string): string {
 	return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -350,6 +355,55 @@ function getIssueWebviewContent(issue: JiraIssue, testCases: TestCase[] = [], is
             color: var(--vscode-button-secondaryForeground);
             cursor: not-allowed;
         }
+        .test-type-section {
+            margin-top: 30px;
+            border-top: 2px solid var(--vscode-editor-foreground);
+            padding-top: 20px;
+        }
+        .test-type-header {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--vscode-foreground);
+            margin-bottom: 15px;
+        }
+        .test-type-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .test-type-dropdown {
+            background: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            border: 1px solid var(--vscode-input-border);
+            border-radius: 4px;
+            padding: 8px 12px;
+            font-size: 14px;
+            min-width: 250px;
+        }
+        .test-type-dropdown:focus {
+            outline: none;
+            border-color: var(--vscode-focusBorder);
+        }
+        .generate-button {
+            background: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .generate-button:hover:not(:disabled) {
+            background: var(--vscode-button-hoverBackground);
+        }
+        .generate-button:disabled {
+            background: var(--vscode-button-secondaryBackground);
+            color: var(--vscode-button-secondaryForeground);
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -403,6 +457,24 @@ function getIssueWebviewContent(issue: JiraIssue, testCases: TestCase[] = [], is
         </div>
     </div>
 
+    <!-- Sección de Selección de Tipo de Test -->
+    <div class="test-type-section">
+        <div class="test-type-header">
+            <span class="icon">⚙️</span>
+            Seleccionar Tipo de Test
+        </div>
+        <div class="test-type-controls">
+            <select class="test-type-dropdown" id="testTypeSelect" onchange="onTestTypeChange()" ${selectedTestType ? `value="${selectedTestType}"` : ''}>
+                <option value="">Selecciona un tipo de test...</option>
+                <option value="Web" ${selectedTestType === 'Web' ? 'selected' : ''}>Web</option>
+                <option value="Api" ${selectedTestType === 'Api' ? 'selected' : ''}>Api</option>
+            </select>
+            <button class="generate-button" id="generateButton" onclick="generateTestCases('${issue.key}')" disabled>
+                Enviar
+            </button>
+        </div>
+    </div>
+
     <!-- Sección de Test Cases -->
     <div class="test-cases-section">
         <div class="test-cases-header">
@@ -442,7 +514,7 @@ function getIssueWebviewContent(issue: JiraIssue, testCases: TestCase[] = [], is
             `).join('')}
         ` : `
             <div class="field-value">
-                <div>No se pudieron generar test cases para esta issue.</div>
+                <div>Selecciona un tipo de test</div>
             </div>
         `}
     </div>
@@ -456,6 +528,36 @@ function getIssueWebviewContent(issue: JiraIssue, testCases: TestCase[] = [], is
 
     <script>
         const vscode = acquireVsCodeApi();
+
+        function onTestTypeChange() {
+            const testTypeSelect = document.getElementById('testTypeSelect');
+            const generateButton = document.getElementById('generateButton');
+
+            // Habilitar el botón solo si se ha seleccionado un tipo de test
+            generateButton.disabled = !testTypeSelect.value;
+        }
+
+        function generateTestCases(issueKey) {
+            const testTypeSelect = document.getElementById('testTypeSelect');
+            const selectedTestType = testTypeSelect.value;
+
+            if (!selectedTestType) {
+                alert('Por favor selecciona un tipo de test antes de continuar.');
+                return;
+            }
+
+            // Enviar mensaje al extension para generar test cases
+            vscode.postMessage({
+                command: 'generateTestCases',
+                issueKey: issueKey,
+                testType: selectedTestType
+            });
+        }
+
+        // Inicializar el estado del botón al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            onTestTypeChange();
+        });
 
         function addComment(issueKey) {
             // Recopilar todos los test cases seleccionados

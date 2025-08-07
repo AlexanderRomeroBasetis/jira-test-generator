@@ -63,17 +63,42 @@
           "type": "string",
           "description": "URL de tu instancia de Jira (ej: https://tuempresa.atlassian.net)"
         },
-        "jiraTestGenerator.apiToken": {
+        "jiraTestGenerator.jiraServerType": {
           "type": "string",
-          "description": "API Token de Jira para autenticación (generar en Account Settings > Security > API tokens)"
+          "enum": ["Jira Cloud", "Jira Server"],
+          "default": "Jira Cloud",
+          "description": "Selecciona el tipo de instancia de Jira para usar las credenciales correctas"
         },
         "jiraTestGenerator.email": {
           "type": "string",
-          "description": "Tu email de Jira para autenticación"
+          "description": "[Jira Cloud] Tu email de Atlassian para la autenticación"
+        },
+        "jiraTestGenerator.apiToken": {
+          "type": "string",
+          "description": "[Jira Cloud] Tu API Token de Atlassian"
+        },
+        "jiraTestGenerator.username": {
+          "type": "string",
+          "description": "[Jira Server] Tu nombre de usuario de Jira para la autenticación"
+        },
+        "jiraTestGenerator.password": {
+          "type": "string",
+          "description": "[Jira Server] Tu contraseña o Personal Access Token de Jira",
+          "format": "password"
         },
         "jiraTestGenerator.gemini.apiKey": {
           "type": "string",
           "description": "API Key de Google Gemini para la generación de test cases. La clave se almacenará de forma segura."
+        },
+        "jiraTestGenerator.gemini.model": {
+          "type": "string",
+          "enum": ["gemini-1.5-pro-latest", "gemini-1.5-flash-latest"],
+          "enumDescriptions": [
+            "Gemini Pro - Modelo más potente y preciso",
+            "Gemini Flash - Modelo más rápido y eficiente"
+          ],
+          "default": "gemini-1.5-flash-latest",
+          "description": "Modelo de Gemini a utilizar para la generación de test cases"
         }
       }
     }

@@ -13,7 +13,7 @@ export class AIService {
   /**
    * Genera test cases usando el proveedor de IA seleccionado
    */
-  async generateTestCases(issue: any): Promise<TestCase[]> {
+  async generateTestCases(issue: any, testType?: string): Promise<TestCase[]> {
     const config = vscode.workspace.getConfiguration('jiraTestGenerator');
     const aiProvider = config.get<string>('aiProvider', 'Gemini');
 
@@ -21,7 +21,7 @@ export class AIService {
       // case 'Copilot':
       //   return this.generateWithCopilot(issue);
       case 'Gemini':
-        return this.generateWithGemini(issue);
+        return this.generateWithGemini(issue, testType);
       default:
         throw new Error(`Proveedor de IA no soportado: ${aiProvider}`);
     }
@@ -73,16 +73,16 @@ export class AIService {
   /**
    * Genera test cases usando Gemini CLI
    */
-  private async generateWithGemini(issue: any): Promise<TestCase[]> {
+  private async generateWithGemini(issue: any, testType?: string): Promise<TestCase[]> {
     try {
       const isGeminiReady = await this.testGeminiCLI();
       if (!isGeminiReady) {
         throw new Error('Gemini CLI no está instalado o la API Key no está configurada.');
       }
 
-      const prompt = this.getSystemPrompt() + '\n\n' + this.buildIssuePrompt(issue);
+      const prompt = this.getSystemPrompt(testType) + '\n\n' + this.buildIssuePrompt(issue);
       const response = await this.callGeminiCLI(prompt);
-      return this.parseTestCasesFromResponse(response);
+      return this.parseTestCasesFromResponse(response, testType);
 
     } catch (error: any) {
       console.error('Error generando test cases con Gemini:', error);
@@ -123,6 +123,7 @@ export class AIService {
   private async callGeminiCLI(prompt: string): Promise<string> {
     const config = vscode.workspace.getConfiguration('jiraTestGenerator');
     const apiKey = config.get<string>('gemini.apiKey');
+    const model = config.get<string>('gemini.model', 'gemini-1.5-flash-latest');
 
     if (!apiKey) {
       throw new Error('API Key de Gemini no encontrada.');
@@ -131,7 +132,7 @@ export class AIService {
     return new Promise((resolve, reject) => {
       // Pasar la API key como una variable de entorno al proceso hijo
       const env = { ...process.env, GOOGLE_API_KEY: apiKey };
-      const gemini = spawn('gemini', ['-p', prompt], { env });
+      const gemini = spawn('gemini', ['-m', model, '-p', prompt], { env });
 
       let stdout = '';
       let stderr = '';
@@ -164,26 +165,61 @@ export class AIService {
   /**
    * Obtiene el prompt del sistema
    */
-  private getSystemPrompt(): string {
-    return `
+  private getSystemPrompt(testType?: string): string {
+    const basePrompt = `
           ## Rol
-          Actúa como un **experto en aseguramiento de calidad (QA)** con certificación ISTQB y experiencia en validaciones funcionales de interfaz de usuario en entornos web.
+          Actúa como un **experto en aseguramiento de calidad (QA)** con certificación ISTQB y experiencia en validaciones funcionales.
 
           ## Objetivo
-          Analiza esta issue de Jira y genera de 1 a 6 test cases a partir de ella.
-          Considera analizar el código del proyecto ya que tienes acceso a él. Sobretodo sé estricto con el formato.
+          Considera analizar el código del proyecto ya que tienes acceso a él.
+          Sobretodo sé estricto con el formato.
+          # Prompt para Análisis de Issues de Jira
 
-          ## Contexto
-          - **Categoría:** Web
-          - **Tipo de validación:** Funcional (Frontend)
-          - **Foco:** UI, interacciones del usuario, validaciones visuales, estados de componentes
+          Tu misión es analizar la siguiente issue de Jira y generar un conjunto de **casos de prueba (test cases) atómicos y bien definidos**.
+          La cantidad de casos de prueba debe ser proporcional a la complejidad de la issue:
+          
+          - **Issues sencillas:** Genera de 1 a 2 casos de prueba.
+          - **Issues de complejidad media:** Genera de 3 a 4 casos de prueba.
+          - **Issues complejas:** Genera de 5 a 6 casos de prueba.
+          
+          Cada caso de prueba debe enfocarse en un escenario único (camino feliz, caso borde, entrada inválida, etc.).
+          
+          Tienes acceso al código fuente del proyecto, así que úsalo para identificar puntos críticos que requieran validación.
+          
+          Es crucial que seas extremadamente estricto con el formato.`
 
+    let contextSection = '';
+
+    if (testType === 'Web') {
+      contextSection = `
+          ## Contexto de los Casos de Prueba
+          La issue describe un cambio en una interfaz web. Por lo tanto, los casos de prueba deben enfocarse en la validación del frontend.
+          Genera pruebas que cubran:
+          - La UI y las interacciones del usuario.
+          - Validaciones visuales y de estado en los componentes.
+          - La navegación, los formularios y el responsive design.`;
+    } else if (testType === 'Api') {
+      contextSection = `
+          ## Contexto de los Casos de Prueba
+          La issue describe un cambio en una API. Por lo tanto, los casos de prueba deben enfocarse en la validación del backend.
+          Genera pruebas que cubran:
+          - El endpoint y los métodos HTTP correctos.
+          - Códigos de respuesta esperados (200, 404, 500, etc.).
+          - Validación de los datos de entrada y salida.
+          - Escenarios de autenticación y autorización.
+          - Manejo de errores.`;
+    }
+
+    const formatSection = `
           Formato requerido:
           TITULO: [breve y claro]
+          TIPO: [Web, Api, o Error]
           DESCRIPCIÓN: [detallada, qué testear y por qué, mínimo 50 palabras]
           RESULTADO: [qué se espera que devuelva el test al ejecutarse]
           ---
           [repetir para cada test case]`;
+
+    return basePrompt + contextSection + formatSection;
   }
 
   /**
@@ -199,46 +235,69 @@ export class AIService {
             Proyecto: ${issue.project.name} (${issue.project.key})
             ${issue.description ? `Descripción: ${issue.description}` : ''}
 
-            Genera de 3 a 6 test cases para esta issue siguiendo el formato especificado.`;
+            Genera de 1 a 6 test cases para esta issue siguiendo el formato especificado.`;
   }
 
   /**
    * Parsea la respuesta del AI y extrae los test cases
    */
-  private parseTestCasesFromResponse(response: string): TestCase[] {
+  private parseTestCasesFromResponse(response: string, testType?: string): TestCase[] {
     const testCases: TestCase[] = [];
+
+    console.log('[DEBUG] AI Response length:', response.length);
+    console.log('[DEBUG] AI Response first 500 chars:', response.substring(0, 500));
+    console.log('[DEBUG] testType parameter:', testType);
 
     // Dividir por el separador "---"
     const sections = response.split('---').map(section => section.trim());
+    console.log('[DEBUG] Number of sections found:', sections.length);
 
-    for (const section of sections) {
-      if (!section) continue;
+    for (let i = 0; i < sections.length; i++) {
+      const section = sections[i];
+      if (!section) {
+        console.log(`[DEBUG] Section ${i} is empty, skipping`);
+        continue;
+      }
 
-      const testCase = this.parseTestCaseSection(section);
+      console.log(`[DEBUG] Processing section ${i}, length: ${section.length}`);
+      const testCase = this.parseTestCaseSection(section, testType);
       if (testCase) {
+        console.log(`[DEBUG] Section ${i} parsed successfully: ${testCase.title}`);
         testCases.push(testCase);
+      } else {
+        console.log(`[DEBUG] Section ${i} failed to parse`);
       }
     }
 
     // Si no pudimos parsear correctamente, intentar un método alternativo
     if (testCases.length === 0 && response.length > 0) {
+      console.log('[DEBUG] Parsing failed completely, using alternative method');
+      console.log('[DEBUG] Response that failed to parse:', response);
       return this.parseTestCasesAlternative(response);
     }
 
+    console.log('[DEBUG] Successfully parsed test cases:', testCases.length);
     return testCases
   }
 
   /**
    * Parsea una sección individual de test case
    */
-  private parseTestCaseSection(section: string): TestCase | null {
+  private parseTestCaseSection(section: string, testType?: string): TestCase | null {
+    console.log('[DEBUG] parseTestCaseSection - Input section length:', section.length);
+    console.log('[DEBUG] parseTestCaseSection - Input section first 200 chars:', section.substring(0, 200));
+    console.log('[DEBUG] parseTestCaseSection - testType:', testType);
+
     // Limpiar la sección de encabezados markdown y asteriscos alrededor de las etiquetas
     const cleanSection = section
       .replace(/###.*$/gm, '') // Eliminar encabezados ###
       .replace(/\*\*(TITULO:|DESCRIPCI[OÓ]N:|RESULTADO:|TIPO:)\*\*/gi, '$1') // Eliminar ** de las etiquetas
       .trim();
 
+    console.log('[DEBUG] parseTestCaseSection - Clean section length:', cleanSection.length);
+
     const lines = cleanSection.split('\n');
+    console.log('[DEBUG] parseTestCaseSection - Number of lines:', lines.length);
 
     let title = '';
     let type = '';
@@ -253,7 +312,8 @@ export class AIService {
       result: []
     };
 
-    for (const line of lines) {
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
         const trimmedLine = line.trim();
         if (trimmedLine.length === 0) continue;
 
@@ -261,20 +321,29 @@ export class AIService {
 
         if (upperLine.startsWith('TITULO:')) {
             currentField = 'title';
-            content.title.push(trimmedLine.substring('TITULO:'.length).trim());
+            const titleValue = trimmedLine.substring('TITULO:'.length).trim();
+            content.title.push(titleValue);
+            console.log('[DEBUG] Found TITULO:', titleValue);
         } else if (upperLine.startsWith('DESCRIPCIÓN:') || upperLine.startsWith('DESCRIPCION:')) {
             currentField = 'description';
             const label = upperLine.startsWith('DESCRIPCIÓN:') ? 'DESCRIPCIÓN:' : 'DESCRIPCION:';
-            content.description.push(trimmedLine.substring(label.length).trim());
+            const descValue = trimmedLine.substring(label.length).trim();
+            content.description.push(descValue);
+            console.log('[DEBUG] Found DESCRIPCIÓN:', descValue.substring(0, 50) + '...');
         } else if (upperLine.startsWith('RESULTADO:')) {
             currentField = 'result';
-            content.result.push(trimmedLine.substring('RESULTADO:'.length).trim());
+            const resultValue = trimmedLine.substring('RESULTADO:'.length).trim();
+            content.result.push(resultValue);
+            console.log('[DEBUG] Found RESULTADO:', resultValue.substring(0, 50) + '...');
         } else if (upperLine.startsWith('TIPO:')) {
           currentField = 'type';
-          content.type.push(trimmedLine.substring('TIPO:'.length).trim());
+          const typeValue = trimmedLine.substring('TIPO:'.length).trim();
+          content.type.push(typeValue);
+          console.log('[DEBUG] Found TIPO:', typeValue);
         } else if (currentField) {
           // Añadir a campo actual si es un valor multilínea
           content[currentField].push(trimmedLine);
+          console.log(`[DEBUG] Adding to ${currentField}:`, trimmedLine.substring(0, 50) + '...');
         }
     }
 
@@ -283,15 +352,32 @@ export class AIService {
     description = content.description.join('\n').trim();
     result = content.result.join('\n').trim();
 
-    if (
-        title &&
-        (type === 'Web' || type === 'Api' || type === 'Error') &&
-        description &&
-        result
-    ) {
-      return { title, type, description, result };
+    console.log('[DEBUG] Before fallback - Title length:', title.length, 'Type:', type, 'Description length:', description.length, 'Result length:', result.length);
+
+    // Si el tipo no es válido, usar el testType como fallback
+    if (!type || (type !== 'Web' && type !== 'Api' && type !== 'Error')) {
+      console.log('[DEBUG] Type is invalid or empty, applying fallback. Original type:', type);
+      if (testType === 'Web' || testType === 'Api') {
+        type = testType;
+        console.log('[DEBUG] Applied testType fallback:', type);
+      } else {
+        type = 'Error'; // Fallback por defecto
+        console.log('[DEBUG] Applied default fallback: Error');
+      }
     }
 
+    console.log('[DEBUG] Final parsed values - Title:', !!title, 'Type:', type, 'Description:', !!description, 'Result:', !!result);
+
+    if (title && description && result && (type === 'Web' || type === 'Api' || type === 'Error')) {
+      console.log('[DEBUG] Section validation passed, returning test case');
+      return { title, type: type as 'Web' | 'Api' | 'Error', description, result };
+    }
+
+    console.log('[DEBUG] Section validation failed');
+    console.log('[DEBUG] Title present:', !!title, title ? `(${title.length} chars)` : '');
+    console.log('[DEBUG] Description present:', !!description, description ? `(${description.length} chars)` : '');
+    console.log('[DEBUG] Result present:', !!result, result ? `(${result.length} chars)` : '');
+    console.log('[DEBUG] Type valid:', type === 'Web' || type === 'Api' || type === 'Error', `(${type})`);
     return null;
   }
 

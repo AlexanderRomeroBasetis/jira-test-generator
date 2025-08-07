@@ -46,10 +46,24 @@ export class JiraService {
       }
     });
 
-    const { email, apiToken } = this.getCredentials();
-    if (email && apiToken) {
-      const auth = Buffer.from(`${email}:${apiToken}`).toString('base64');
-      this.httpClient.defaults.headers.common['Authorization'] = `Basic ${auth}`;
+    const { email, apiToken, jiraServerType, username, password } = this.getCredentials();
+    
+    delete this.httpClient.defaults.headers.common['Authorization'];
+
+    switch (jiraServerType) {
+      case 'Jira Server':
+        if (username && password) {
+          const serverAuth = Buffer.from(`${username}:${password}`).toString('base64');
+          this.httpClient.defaults.headers.common['Authorization'] = `Basic ${serverAuth}`;
+        }
+        break;
+      case 'Jira Cloud':
+      default:
+        if (email && apiToken) {
+          const cloudAuth = Buffer.from(`${email}:${apiToken}`).toString('base64');
+          this.httpClient.defaults.headers.common['Authorization'] = `Basic ${cloudAuth}`;
+        }
+        break;
     }
   }
 
@@ -58,11 +72,14 @@ export class JiraService {
     return config.get<string>('jiraUrl') || '';
   }
 
-  private getCredentials(): { email: string; apiToken: string } {
+  private getCredentials(): { email: string; apiToken: string, jiraServerType: string, username: string, password: string } {
     const config = vscode.workspace.getConfiguration('jiraTestGenerator');
     return {
       email: config.get<string>('email') || '',
-      apiToken: config.get<string>('apiToken') || ''
+      apiToken: config.get<string>('apiToken') || '',
+      jiraServerType: config.get<string>('jiraServerType') || 'Jira Cloud',
+      username: config.get<string>('username') || '',
+      password: config.get<string>('password') || ''
     };
   }
 
@@ -204,12 +221,26 @@ export class JiraService {
     this.jiraUrl = this.getJiraUrl();
     this.httpClient.defaults.baseURL = `${this.jiraUrl}/rest/api/3`;
 
-    const { email, apiToken } = this.getCredentials();
-    if (email && apiToken) {
-      const auth = Buffer.from(`${email}:${apiToken}`).toString('base64');
-      this.httpClient.defaults.headers.common['Authorization'] = `Basic ${auth}`;
-    } else {
-      delete this.httpClient.defaults.headers.common['Authorization'];
+    const { email, apiToken, jiraServerType, username, password } = this.getCredentials();
+
+    delete this.httpClient.defaults.headers.common['Authorization'];
+
+    switch (jiraServerType) {
+      case 'Jira Server':
+        if (username && password) {
+          const serverAuth = Buffer.from(`${username}:${password}`).toString('base64');
+          this.httpClient.defaults.headers.common['Authorization'] = `Basic ${serverAuth}`;
+        }
+        break;
+      case 'Jira Cloud':
+      default:
+        if (email && apiToken) {
+          const cloudAuth = Buffer.from(`${email}:${apiToken}`).toString('base64');
+          this.httpClient.defaults.headers.common['Authorization'] = `Basic ${cloudAuth}`;
+        } else {
+          delete this.httpClient.defaults.headers.common['Authorization'];
+        }
+        break;
     }
   }
 }
