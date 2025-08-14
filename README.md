@@ -33,25 +33,13 @@ Una extensión de VSCode que se conecta directamente a Jira para obtener informa
 ### Configuración de Jira (Requerida)
 
 1.  Ir a **VS Code Settings** → **Extensions** → **Jira Test Generator**.
-2.  Configura los siguientes campos según tu tipo de Jira:
-
-#### Paso 1: Configuración General
-*   **Jira Url**: La URL de tu instancia de Jira (ej: `https://tuempresa.atlassian.net` o `https://jira.tuempresa.com`).
-*   **Jira Server Type**: Selecciona **"Jira Cloud"** o **"Jira Server"**. Esto es muy importante ya que determina qué credenciales se usarán.
-
-#### Paso 2: Configura tus Credenciales
-
-Rellena **solamente** la sección que corresponda a tu tipo de Jira.
-
-##### Si usas Jira Cloud:
-*   **Email**: Tu email de cuenta de Atlassian.
-*   **Api Token**: Tu token de API de Atlassian.
-    *   **¿Cómo obtenerlo?**: Ve a [tu perfil de Atlassian](https://id.atlassian.com/manage-profile/security/api-tokens), haz clic en "Create API token" y copia el valor.
-
-##### Si usas Jira Server:
-*   **Username**: Tu nombre de usuario de Jira para iniciar sesión.
-*   **Password**: Tu contraseña de Jira. También puedes usar un **Token de Acceso Personal (PAT)** en este campo para mayor seguridad.
-    *   **¿Cómo obtener un PAT (Recomendado)?**: En Jira Server, ve a tu Perfil → "Personal Access Tokens" y crea un nuevo token.
+2.  Configura los siguientes campos:
+    *   **Jira Url**: La URL de tu instancia de Jira (ej: `https://tuempresa.atlassian.net` o `https://jira.tuempresa.com`).
+    *   **Jira Server Type**: Selecciona **"Jira Cloud"** o **"Jira Server"**. Esto determina cómo se usará el token.
+    *   **Email**: Tu email de Atlassian. **Es requerido únicamente si usas Jira Cloud**.
+    *   **Api Token**: Tu token de seguridad.
+        *   **Para Jira Cloud**: Es el [API Token de Atlassian](https://id.atlassian.com/manage-profile/security/api-tokens).
+        *   **Para Jira Server**: Es el **Personal Access Token (PAT)** que puedes generar en tu perfil de Jira.
 
 ### Configuración de Google Gemini (Requerida)
 

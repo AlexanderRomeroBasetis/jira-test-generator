@@ -1,6 +1,7 @@
 import axios from 'axios';
 import * as vscode from 'vscode';
 
+// Interfaz común para ambos tipos de instancias Jira
 export interface JiraIssue {
   id: string;
   key: string;
@@ -32,38 +33,124 @@ export interface JiraIssue {
   };
 }
 
+// Interfaz para respuesta de Jira Cloud
+interface JiraCloudResponse {
+  id: string;
+  key: string;
+  fields: {
+    summary: string;
+    status: {
+      name: string;
+      statusCategory: {
+        name: string;
+      };
+    };
+    priority?: {
+      name: string;
+    };
+    issuetype: {
+      name: string;
+    };
+    reporter?: {
+      displayName: string;
+      emailAddress: string;
+    };
+    created: string;
+    updated: string;
+    project: {
+      key: string;
+      name: string;
+    };
+    description?: {
+      content?: Array<{
+        content?: Array<{
+          text?: string;
+        }>;
+      }>;
+    };
+    assignee?: {
+      displayName: string;
+      emailAddress: string;
+    };
+  };
+  renderedFields?: {
+    description?: string;
+  };
+}
+
+// Interfaz para respuesta de Jira Server
+interface JiraServerResponse {
+  id: string;
+  key: string;
+  fields: {
+    summary: string;
+    status: {
+      name: string;
+      statusCategory: {
+        name: string;
+      };
+    };
+    priority?: {
+      name: string;
+    };
+    issuetype: {
+      name: string;
+    };
+    reporter?: {
+      displayName: string;
+      emailAddress: string;
+      name?: string;
+    };
+    assignee?: {
+      displayName: string;
+      emailAddress: string;
+      name?: string;
+    };
+    created: string;
+    updated: string;
+    project: {
+      key: string;
+      name: string;
+    };
+    description?: string; // En Jira Server, la descripción es directamente un string
+  };
+}
+
 export class JiraService {
   private httpClient: any;
   private jiraUrl: string;
 
   constructor() {
     this.jiraUrl = this.getJiraUrl();
+    const { email, apiToken, jiraServerType } = this.getCredentials();
+
+    // Configurar API endpoint diferente según el tipo de servidor
+    let apiEndpoint = '/rest/api/3'; // Por defecto usar API v3 (Cloud)
+
+    if (jiraServerType === 'Jira Server') {
+      apiEndpoint = '/rest/api/2'; // API v2 para Jira Server
+    }
+
     this.httpClient = axios.create({
-      baseURL: `${this.jiraUrl}/rest/api/3`,
+      baseURL: `${this.jiraUrl}${apiEndpoint}`,
       timeout: 10000,
       headers: {
         'Content-Type': 'application/json',
       }
     });
 
-    const { email, apiToken, jiraServerType, username, password } = this.getCredentials();
-    
-    delete this.httpClient.defaults.headers.common['Authorization'];
-
-    switch (jiraServerType) {
-      case 'Jira Server':
-        if (username && password) {
-          const serverAuth = Buffer.from(`${username}:${password}`).toString('base64');
-          this.httpClient.defaults.headers.common['Authorization'] = `Basic ${serverAuth}`;
-        }
-        break;
-      case 'Jira Cloud':
-      default:
-        if (email && apiToken) {
-          const cloudAuth = Buffer.from(`${email}:${apiToken}`).toString('base64');
-          this.httpClient.defaults.headers.common['Authorization'] = `Basic ${cloudAuth}`;
-        }
-        break;
+    // Configurar autenticación según el tipo de servidor
+    if (jiraServerType === 'Jira Server') {
+      if (apiToken) {
+        // Para Jira Server usamos Bearer Token
+        this.httpClient.defaults.headers.common['Authorization'] = `Bearer ${apiToken}`;
+      }
+    } else {
+      // Jira Cloud siempre usa Basic Auth con email/apiToken
+      if (email && apiToken) {
+        const cloudAuth = Buffer.from(`${email}:${apiToken}`).toString('base64');
+        this.httpClient.defaults.headers.common['Authorization'] = `Basic ${cloudAuth}`;
+      }
     }
   }
 
@@ -72,14 +159,12 @@ export class JiraService {
     return config.get<string>('jiraUrl') || '';
   }
 
-  private getCredentials(): { email: string; apiToken: string, jiraServerType: string, username: string, password: string } {
+  private getCredentials(): { email: string; apiToken: string; jiraServerType: string } {
     const config = vscode.workspace.getConfiguration('jiraTestGenerator');
     return {
       email: config.get<string>('email') || '',
       apiToken: config.get<string>('apiToken') || '',
-      jiraServerType: config.get<string>('jiraServerType') || 'Jira Cloud',
-      username: config.get<string>('username') || '',
-      password: config.get<string>('password') || ''
+      jiraServerType: config.get<string>('jiraServerType') || 'Jira Cloud'
     };
   }
 
@@ -90,40 +175,16 @@ export class JiraService {
    */
   async getIssue(issueKey: string): Promise<JiraIssue> {
     try {
-      const response = await this.httpClient.get(`/issue/${issueKey}?expand=names`);
-
-      // Transformar la respuesta de Jira al formato esperado
+      const { jiraServerType } = this.getCredentials();
+      const response = await this.httpClient.get(`/issue/${issueKey}?expand=names,renderedFields`);
       const jiraData = response.data;
-      return {
-        id: jiraData.id,
-        key: jiraData.key,
-        summary: jiraData.fields.summary,
-        status: {
-          name: jiraData.fields.status.name,
-          statusCategory: jiraData.fields.status.statusCategory.name
-        },
-        priority: {
-          name: jiraData.fields.priority?.name || 'No Priority'
-        },
-        issueType: {
-          name: jiraData.fields.issuetype.name
-        },
-        reporter: {
-          displayName: jiraData.fields.reporter?.displayName || 'Unknown',
-          emailAddress: jiraData.fields.reporter?.emailAddress || ''
-        },
-        created: jiraData.fields.created,
-        updated: jiraData.fields.updated,
-        project: {
-          key: jiraData.fields.project.key,
-          name: jiraData.fields.project.name
-        },
-        description: jiraData.fields.description?.content?.[0]?.content?.[0]?.text || jiraData.renderedFields?.description || '',
-        assignee: jiraData.fields.assignee ? {
-          displayName: jiraData.fields.assignee.displayName,
-          emailAddress: jiraData.fields.assignee.emailAddress || ''
-        } : undefined
-      };
+
+      // Usar el método de mapeo adecuado según el tipo de servidor
+      if (jiraServerType === 'Jira Server') {
+        return this.mapJiraServerIssue(jiraData as JiraServerResponse);
+      } else {
+        return this.mapJiraCloudIssue(jiraData as JiraCloudResponse);
+      }
     } catch (error: any) {
       if (error.response) {
         // El servidor respondió con un código de error
@@ -138,25 +199,108 @@ export class JiraService {
     }
   }
 
+  /**
+   * Mapea la respuesta de Jira Cloud al formato común de JiraIssue
+   */
+  private mapJiraCloudIssue(jiraData: JiraCloudResponse): JiraIssue {
+    return {
+      id: jiraData.id,
+      key: jiraData.key,
+      summary: jiraData.fields.summary,
+      status: {
+        name: jiraData.fields.status.name,
+        statusCategory: jiraData.fields.status.statusCategory.name
+      },
+      priority: {
+        name: jiraData.fields.priority?.name || 'No Priority'
+      },
+      issueType: {
+        name: jiraData.fields.issuetype.name
+      },
+      reporter: {
+        displayName: jiraData.fields.reporter?.displayName || 'Unknown',
+        emailAddress: jiraData.fields.reporter?.emailAddress || ''
+      },
+      created: jiraData.fields.created,
+      updated: jiraData.fields.updated,
+      project: {
+        key: jiraData.fields.project.key,
+        name: jiraData.fields.project.name
+      },
+      description: jiraData.fields.description?.content?.[0]?.content?.[0]?.text || jiraData.renderedFields?.description || '',
+      assignee: jiraData.fields.assignee ? {
+        displayName: jiraData.fields.assignee.displayName,
+        emailAddress: jiraData.fields.assignee.emailAddress || ''
+      } : undefined
+    };
+  }
+
+  /**
+   * Mapea la respuesta de Jira Server al formato común de JiraIssue
+   */
+  private mapJiraServerIssue(jiraData: JiraServerResponse): JiraIssue {
+    return {
+      id: jiraData.id,
+      key: jiraData.key,
+      summary: jiraData.fields.summary,
+      status: {
+        name: jiraData.fields.status.name,
+        statusCategory: jiraData.fields.status.statusCategory.name
+      },
+      priority: {
+        name: jiraData.fields.priority?.name || 'No Priority'
+      },
+      issueType: {
+        name: jiraData.fields.issuetype.name
+      },
+      reporter: {
+        displayName: jiraData.fields.reporter?.displayName || 'Unknown',
+        emailAddress: jiraData.fields.reporter?.emailAddress || ''
+      },
+      created: jiraData.fields.created,
+      updated: jiraData.fields.updated,
+      project: {
+        key: jiraData.fields.project.key,
+        name: jiraData.fields.project.name
+      },
+      // En Jira Server, la descripción es directamente un string
+      description: jiraData.fields.description || '',
+      assignee: jiraData.fields.assignee ? {
+        displayName: jiraData.fields.assignee.displayName,
+        emailAddress: jiraData.fields.assignee.emailAddress || ''
+      } : undefined
+    };
+  }
+
   async addComment(issueKey: string, comment: string): Promise<void> {
     try {
-      await this.httpClient.post(`/issue/${issueKey}/comment`, {
-        body: {
-          type: "doc",
-          version: 1,
-          content: [
-            {
-              type: "paragraph",
-              content: [
-                {
-                  type: "text",
-                  text: comment
-                }
-              ]
-            }
-          ]
-        }
-      });
+      const { jiraServerType } = this.getCredentials();
+
+      if (jiraServerType === 'Jira Server') {
+        // Formato para Jira Server (API v2)
+        await this.httpClient.post(`/issue/${issueKey}/comment`, {
+          body: comment // Jira Server acepta texto plano
+        });
+      } else {
+        // Formato para Jira Cloud (API v3 con Atlassian Document Format)
+        await this.httpClient.post(`/issue/${issueKey}/comment`, {
+          body: {
+            type: "doc",
+            version: 1,
+            content: [
+              {
+                type: "paragraph",
+                content: [
+                  {
+                    type: "text",
+                    text: comment
+                  }
+                ]
+              }
+            ]
+          }
+        });
+      }
     } catch (error: any) {
         throw new Error(`Error al agregar comentario: ${error.message}`);
     }
@@ -169,40 +313,22 @@ export class JiraService {
    */
   async getIssuesByProject(projectKey: string): Promise<JiraIssue[]> {
     try {
+      const { jiraServerType } = this.getCredentials();
       const jql = `project = "${projectKey}" ORDER BY created DESC`;
-      const response = await this.httpClient.get(`/search?jql=${encodeURIComponent(jql)}&expand=names&maxResults=50`);
+      const response = await this.httpClient.get(`/search?jql=${encodeURIComponent(jql)}&expand=names,renderedFields&maxResults=50`);
 
       // Transformar la respuesta de Jira al formato esperado
-      return response.data.issues.map((jiraData: any) => ({
-        id: jiraData.id,
-        key: jiraData.key,
-        summary: jiraData.fields.summary,
-        status: {
-          name: jiraData.fields.status.name,
-          statusCategory: jiraData.fields.status.statusCategory.name
-        },
-        priority: {
-          name: jiraData.fields.priority?.name || 'No Priority'
-        },
-        issueType: {
-          name: jiraData.fields.issuetype.name
-        },
-        reporter: {
-          displayName: jiraData.fields.reporter?.displayName || 'Unknown',
-          emailAddress: jiraData.fields.reporter?.emailAddress || ''
-        },
-        created: jiraData.fields.created,
-        updated: jiraData.fields.updated,
-        project: {
-          key: jiraData.fields.project.key,
-          name: jiraData.fields.project.name
-        },
-        description: jiraData.fields.description?.content?.[0]?.content?.[0]?.text || jiraData.renderedFields?.description || '',
-        assignee: jiraData.fields.assignee ? {
-          displayName: jiraData.fields.assignee.displayName,
-          emailAddress: jiraData.fields.assignee.emailAddress || ''
-        } : undefined
-      }));
+      if (jiraServerType === 'Jira Server') {
+        // Mapeo para Jira Server
+        return response.data.issues.map((jiraData: JiraServerResponse) => 
+          this.mapJiraServerIssue(jiraData)
+        );
+      } else {
+        // Mapeo para Jira Cloud
+        return response.data.issues.map((jiraData: JiraCloudResponse) => 
+          this.mapJiraCloudIssue(jiraData)
+        );
+      }
     } catch (error: any) {
       if (error.response) {
         throw new Error(`Error de Jira API: ${error.response.status} - ${error.response.data?.errorMessages?.[0] || error.response.statusText}`);
@@ -219,28 +345,32 @@ export class JiraService {
    */
   updateConfiguration(): void {
     this.jiraUrl = this.getJiraUrl();
-    this.httpClient.defaults.baseURL = `${this.jiraUrl}/rest/api/3`;
+    const { email, apiToken, jiraServerType } = this.getCredentials();
 
-    const { email, apiToken, jiraServerType, username, password } = this.getCredentials();
+    // Actualizar URL base según el tipo de servidor
+    let apiEndpoint = '/rest/api/3'; // Por defecto API v3 (Cloud)
 
+    if (jiraServerType === 'Jira Server') {
+      apiEndpoint = '/rest/api/2'; // API v2 para Jira Server
+    }
+
+    this.httpClient.defaults.baseURL = `${this.jiraUrl}${apiEndpoint}`;
+
+    // Eliminar autorización anterior
     delete this.httpClient.defaults.headers.common['Authorization'];
 
-    switch (jiraServerType) {
-      case 'Jira Server':
-        if (username && password) {
-          const serverAuth = Buffer.from(`${username}:${password}`).toString('base64');
-          this.httpClient.defaults.headers.common['Authorization'] = `Basic ${serverAuth}`;
-        }
-        break;
-      case 'Jira Cloud':
-      default:
-        if (email && apiToken) {
-          const cloudAuth = Buffer.from(`${email}:${apiToken}`).toString('base64');
-          this.httpClient.defaults.headers.common['Authorization'] = `Basic ${cloudAuth}`;
-        } else {
-          delete this.httpClient.defaults.headers.common['Authorization'];
-        }
-        break;
+    // Configurar autenticación según el tipo de servidor
+    if (jiraServerType === 'Jira Server') {
+      if (apiToken) {
+        // Usar Bearer token para Jira Server
+        this.httpClient.defaults.headers.common['Authorization'] = `Bearer ${apiToken}`;
+      }
+    } else {
+      // Jira Cloud siempre usa Basic Auth con email/apiToken
+      if (email && apiToken) {
+        const cloudAuth = Buffer.from(`${email}:${apiToken}`).toString('base64');
+        this.httpClient.defaults.headers.common['Authorization'] = `Basic ${cloudAuth}`;
+      }
     }
   }
 }

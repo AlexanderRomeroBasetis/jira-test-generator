@@ -2,7 +2,7 @@
   "name": "jira-test-generator",
   "displayName": "Jira Test Generator",
   "description": "Una extensión de VSCode que se conecta directamente a Jira para obtener información de issues y generar test cases automáticamente usando múltiples proveedores de IA.",
-  "version": "1.0.0",
+  "version": "0.0.14",
   "icon": "logo.png",
   "publisher": "alexander-romero",
   "author": {
@@ -20,8 +20,6 @@
     "test",
     "testing",
     "ai",
-    "gpt",
-    "claude",
     "gemini",
     "automation"
   ],
@@ -67,24 +65,15 @@
           "type": "string",
           "enum": ["Jira Cloud", "Jira Server"],
           "default": "Jira Cloud",
-          "description": "Selecciona el tipo de instancia de Jira para usar las credenciales correctas"
+          "description": "Selecciona el tipo de instancia de Jira para usar el método de autenticación correcto"
         },
         "jiraTestGenerator.email": {
           "type": "string",
-          "description": "[Jira Cloud] Tu email de Atlassian para la autenticación"
+          "description": "Tu email de Atlassian (requerido solo para Jira Cloud)"
         },
         "jiraTestGenerator.apiToken": {
           "type": "string",
-          "description": "[Jira Cloud] Tu API Token de Atlassian"
-        },
-        "jiraTestGenerator.username": {
-          "type": "string",
-          "description": "[Jira Server] Tu nombre de usuario de Jira para la autenticación"
-        },
-        "jiraTestGenerator.password": {
-          "type": "string",
-          "description": "[Jira Server] Tu contraseña o Personal Access Token de Jira",
-          "format": "password"
+          "description": "Tu API Token (para Jira Cloud) o Personal Access Token (para Jira Server)"
         },
         "jiraTestGenerator.gemini.apiKey": {
           "type": "string",

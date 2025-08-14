@@ -75,17 +75,40 @@ export class AIService {
    */
   private async generateWithGemini(issue: any, testType?: string): Promise<TestCase[]> {
     try {
+      console.log('[DEBUG-FLOW] Iniciando generateWithGemini');
+      vscode.window.showInformationMessage('Iniciando generación de test cases...');
+
+      console.log('[DEBUG-FLOW] Verificando si Gemini CLI está listo');
       const isGeminiReady = await this.testGeminiCLI();
       if (!isGeminiReady) {
+        console.log('[DEBUG-FLOW] Gemini CLI no está listo');
+        vscode.window.showErrorMessage('Gemini CLI no está instalado o la API Key no está configurada.');
         throw new Error('Gemini CLI no está instalado o la API Key no está configurada.');
       }
 
+      console.log('[DEBUG-FLOW] Construyendo prompt para tipo: ' + (testType || 'General'));
       const prompt = this.getSystemPrompt(testType) + '\n\n' + this.buildIssuePrompt(issue);
+      console.log('[DEBUG-FLOW] Longitud del prompt: ' + prompt.length + ' caracteres');
+
+      console.log('[DEBUG-FLOW] Llamando a Gemini CLI');
       const response = await this.callGeminiCLI(prompt);
-      return this.parseTestCasesFromResponse(response, testType);
+      console.log('[DEBUG-FLOW] Respuesta recibida de Gemini, longitud: ' + response.length);
+
+      console.log('[DEBUG-FLOW] Parseando respuesta para obtener test cases');
+      const testCases = this.parseTestCasesFromResponse(response, testType);
+      console.log('[DEBUG-FLOW] Proceso completado. Test cases generados: ' + testCases.length);
+
+      if (testCases.length === 0) {
+        vscode.window.showWarningMessage('No se pudieron generar casos de prueba a partir de la respuesta de Gemini.');
+      } else {
+        vscode.window.showInformationMessage(`Se generaron ${testCases.length} casos de prueba.`);
+      }
+
+      return testCases;
 
     } catch (error: any) {
-      console.error('Error generando test cases con Gemini:', error);
+      console.error('[DEBUG-FLOW] Error generando test cases con Gemini:', error);
+      vscode.window.showErrorMessage(`Error en generación: ${error.message}`);
       throw new Error(`Error al generar test cases con Gemini: ${error.message}`);
     }
   }
@@ -94,45 +117,22 @@ export class AIService {
    * Prueba si Gemini CLI está instalado y configurado
    */
   async testGeminiCLI(): Promise<boolean> {
+    console.log('[DEBUG-CLI] Verificando configuración de Gemini CLI');
     const config = vscode.workspace.getConfiguration('jiraTestGenerator');
     const apiKey = config.get<string>('gemini.apiKey');
 
     if (!apiKey) {
-      vscode.window.showErrorMessage('La API Key de Gemini no está configurada. Por favor, configúrala en los ajustes de la extensión.');
+      console.log('[DEBUG-CLI] Error: No se encontró API Key de Gemini');
+      vscode.window.showErrorMessage('Error: La API Key de Gemini no está configurada en los ajustes de la extensión.');
       return false;
     }
 
+    console.log('[DEBUG-CLI] API Key encontrada, verificando CLI');
+    vscode.window.showInformationMessage('Verificando instalación de Gemini CLI...');
+
     return new Promise((resolve) => {
-      const gemini = spawn('gemini', ['--version']);
-      gemini.on('error', () => {
-        vscode.window.showErrorMessage('El CLI de Gemini no está instalado. Por favor, sigue las instrucciones de instalación.');
-        resolve(false);
-      });
-      gemini.on('exit', (code) => {
-        if (code !== 0) {
-          vscode.window.showErrorMessage('El CLI de Gemini no funciona correctamente.');
-        }
-        resolve(code === 0);
-      });
-    });
-  }
-
-  /**
-   * Llama al CLI de Gemini
-   */
-  private async callGeminiCLI(prompt: string): Promise<string> {
-    const config = vscode.workspace.getConfiguration('jiraTestGenerator');
-    const apiKey = config.get<string>('gemini.apiKey');
-    const model = config.get<string>('gemini.model', 'gemini-1.5-flash-latest');
-
-    if (!apiKey) {
-      throw new Error('API Key de Gemini no encontrada.');
-    }
-
-    return new Promise((resolve, reject) => {
-      // Pasar la API key como una variable de entorno al proceso hijo
-      const env = { ...process.env, GOOGLE_API_KEY: apiKey };
-      const gemini = spawn('gemini', ['-m', model, '-p', prompt], { env });
+      console.log('[DEBUG-CLI] Ejecutando: gemini --version');
+      const gemini = spawn('gemini', ['--version'], { shell: true });
 
       let stdout = '';
       let stderr = '';
@@ -145,18 +145,115 @@ export class AIService {
         stderr += data.toString();
       });
 
-      gemini.on('close', (code) => {
+      gemini.on('error', (err) => {
+        console.error('[DEBUG-CLI] Error al ejecutar spawn("gemini"):', err);
+        vscode.window.showErrorMessage('Error: No se pudo encontrar el comando "gemini". Asegúrate de que Gemini CLI esté instalado y de que la ruta esté en el PATH del sistema. Puede que necesites reiniciar VS Code o el PC.');
+        resolve(false);
+      });
+
+      gemini.on('exit', (code) => {
         if (code !== 0) {
-          console.error(`Gemini CLI exited with code ${code}`);
-          console.error(stderr);
+          console.log(`[DEBUG-CLI] El comando falló con código ${code}`);
+          console.log(`[DEBUG-CLI] stderr: ${stderr}`);
+          vscode.window.showErrorMessage(`Error: El comando 'gemini --version' falló con el código de salida ${code}.`);
+          resolve(false);
+        } else {
+          console.log(`[DEBUG-CLI] Gemini CLI verificado correctamente: ${stdout.trim()}`);
+          vscode.window.showInformationMessage(`Gemini CLI verificado: ${stdout.trim()}`);
+          resolve(true);
+        }
+      });
+    });
+  }
+
+  /**
+   * Llama al CLI de Gemini
+   */
+  private async callGeminiCLI(prompt: string): Promise<string> {
+    const config = vscode.workspace.getConfiguration('jiraTestGenerator');
+    const apiKey = config.get<string>('gemini.apiKey');
+    const model = config.get<string>('gemini.model', 'gemini-pro');
+
+    // Log de inicio para diagnóstico
+    console.log('[DEBUG-GEMINI] Iniciando llamada a Gemini CLI');
+    vscode.window.showInformationMessage('Iniciando solicitud a Gemini...');
+
+    if (!apiKey) {
+      console.log('[DEBUG-GEMINI] Error: API Key no encontrada');
+      vscode.window.showErrorMessage('Error: API Key de Gemini no encontrada.');
+      throw new Error('API Key de Gemini no encontrada.');
+    }
+
+    console.log('[DEBUG-GEMINI] Configuración: modelo=' + model);
+
+    return new Promise((resolve, reject) => {
+      // Pasar la API key como una variable de entorno al proceso hijo
+      const env = { ...process.env, GOOGLE_API_KEY: apiKey };
+
+      console.log('[DEBUG-GEMINI] Ejecutando comando con spawn: gemini -m ' + model);
+      vscode.window.showInformationMessage('Ejecutando comando Gemini...');
+
+      // Obtener el directorio del workspace actual para limitar el escaneo
+      const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+      console.log('[DEBUG-GEMINI] Directorio de trabajo:', workspaceFolder || 'No disponible');
+
+      // Crear proceso de Gemini CLI sin pasar el prompt como argumento
+      const gemini = spawn('gemini', ['-m', model], { 
+        env, 
+        shell: true, 
+        cwd: workspaceFolder // Limitar el escaneo al directorio del proyecto
+      });
+
+      // Escribir el prompt en stdin y cerrar
+      console.log('[DEBUG-GEMINI] Enviando prompt a stdin');
+      gemini.stdin.write(prompt);
+      gemini.stdin.end();
+
+      let stdout = '';
+      let stderr = '';
+
+      // Establecer un timeout de seguridad (5 minutos)
+      const timeout = setTimeout(() => {
+        console.log('[DEBUG-GEMINI] TIMEOUT: La operación excedió el tiempo límite de 5 minutos');
+        vscode.window.showErrorMessage('Timeout: La solicitud a Gemini está tardando demasiado. Verificar instalación de Gemini CLI.');
+        gemini.kill();
+        reject(new Error('Timeout: La operación excedió el tiempo límite.'));
+      }, 300000); // 5 minutos
+
+      gemini.stdout.on('data', (data) => {
+        const chunk = data.toString();
+        stdout += chunk;
+        console.log(`[DEBUG-GEMINI] Recibiendo datos (${chunk.length} bytes)`);
+      });
+
+      gemini.stderr.on('data', (data) => {
+        const chunk = data.toString();
+        stderr += chunk;
+        console.log(`[DEBUG-GEMINI] ERROR: ${chunk}`);
+      });
+
+      gemini.on('close', (code) => {
+        clearTimeout(timeout);
+        console.log(`[DEBUG-GEMINI] Proceso terminado con código: ${code}`);
+        vscode.window.showInformationMessage(`Proceso Gemini completado (código: ${code})`);
+
+        if (code !== 0) {
+          console.error(`[DEBUG-GEMINI] Gemini CLI exited with code ${code}`);
+          console.error(`[DEBUG-GEMINI] Error completo: ${stderr}`);
+          vscode.window.showErrorMessage(`Error de Gemini CLI (código ${code}): ${stderr.substring(0, 100)}...`);
           reject(new Error(`Gemini CLI falló con código ${code}.`));
         } else {
-          resolve(stdout);
+          // Filtrar mensajes de estado no deseados del CLI de Gemini
+          const cleanedStdout = stdout.replace(/^Loaded cached credentials\.\s*$/gm, '').trim();
+          console.log(`[DEBUG-GEMINI] Respuesta recibida (${cleanedStdout.length} caracteres)`);
+          resolve(cleanedStdout);
         }
       });
 
       gemini.on('error', (err) => {
-        console.error('Failed to start Gemini CLI process.', err);
+        clearTimeout(timeout);
+        console.error('[DEBUG-GEMINI] Error al iniciar proceso Gemini CLI:', err);
+        vscode.window.showErrorMessage(`Error al iniciar Gemini CLI: ${err.message}`);
         reject(new Error('No se pudo iniciar el proceso de Gemini CLI.'));
       });
     });
