@@ -188,7 +188,7 @@ export class AIService {
 
     return new Promise((resolve, reject) => {
       // Pasar la API key como una variable de entorno al proceso hijo
-      const env = { ...process.env, GOOGLE_API_KEY: apiKey };
+      const env = { ...process.env, GEMINI_API_KEY: apiKey };
 
       console.log('[DEBUG-GEMINI] Ejecutando comando con spawn: gemini -m ' + model);
       vscode.window.showInformationMessage('Ejecutando comando Gemini...');
@@ -236,16 +236,28 @@ export class AIService {
         clearTimeout(timeout);
         console.log(`[DEBUG-GEMINI] Proceso terminado con código: ${code}`);
         vscode.window.showInformationMessage(`Proceso Gemini completado (código: ${code})`);
+        
+        const cleanedStdout = stdout.replace(/^Loaded cached credentials\.\s*$/gm, '').trim();
+        const hasErrorInStderr = /error/i.test(stderr);
 
-        if (code !== 0) {
-          console.error(`[DEBUG-GEMINI] Gemini CLI exited with code ${code}`);
-          console.error(`[DEBUG-GEMINI] Error completo: ${stderr}`);
-          vscode.window.showErrorMessage(`Error de Gemini CLI (código ${code}): ${stderr.substring(0, 100)}...`);
-          reject(new Error(`Gemini CLI falló con código ${code}.`));
+        // Condición para fallo:
+        // 1. El código de salida no es 0.
+        // 2. El código es 0, PERO la salida está vacía Y stderr contiene "error".
+        //    Esto maneja el caso donde el CLI falla pero aun así retorna un código de éxito.
+        if (code !== 0 || (cleanedStdout.length === 0 && hasErrorInStderr)) {
+          console.error(`[DEBUG-GEMINI] Fallo de Gemini CLI. Código: ${code}, Stdout vacío: ${cleanedStdout.length === 0}, Stderr tiene error: ${hasErrorInStderr}`);
+          console.error(`[DEBUG-GEMINI] Stderr completo: ${stderr}`);
+          const errorMessage = `Error de Gemini CLI (código ${code}): ${stderr.substring(0, 200)}...`;
+          vscode.window.showErrorMessage(errorMessage);
+          reject(new Error(`Gemini CLI falló o no produjo ninguna salida. Revisa los logs para más detalles.`));
         } else {
-          // Filtrar mensajes de estado no deseados del CLI de Gemini
-          const cleanedStdout = stdout.replace(/^Loaded cached credentials\.\s*$/gm, '').trim();
           console.log(`[DEBUG-GEMINI] Respuesta recibida (${cleanedStdout.length} caracteres)`);
+          
+          if (stderr.trim().length > 0) {
+            // Registrar mensajes no fatales de stderr como advertencias.
+            console.log(`[DEBUG-GEMINI] Advertencias de stderr: ${stderr}`);
+          }
+          
           resolve(cleanedStdout);
         }
       });
@@ -268,8 +280,8 @@ export class AIService {
           Actúa como un **experto en aseguramiento de calidad (QA)** con certificación ISTQB y experiencia en validaciones funcionales.
 
           ## Objetivo
-          Considera analizar el código del proyecto ya que tienes acceso a él.
           Sobretodo sé estricto con el formato.
+          
           # Prompt para Análisis de Issues de Jira
 
           Tu misión es analizar la siguiente issue de Jira y generar un conjunto de **casos de prueba (test cases) atómicos y bien definidos**.

@@ -203,6 +203,21 @@ export class JiraService {
    * Mapea la respuesta de Jira Cloud al formato común de JiraIssue
    */
   private mapJiraCloudIssue(jiraData: JiraCloudResponse): JiraIssue {
+    // Lógica mejorada para extraer la descripción
+    let descriptionText = '';
+    if (jiraData.renderedFields?.description) {
+      // Opción 1: Usar la descripción renderizada (HTML) y limpiarla para obtener texto plano.
+      descriptionText = jiraData.renderedFields.description
+        .replace(/<br\s*\/?>/gi, '\n') // Reemplazar <br> con saltos de línea
+        .replace(/<\/p>/gi, '\n')     // Reemplazar </p> con saltos de línea
+        .replace(/<[^>]*>/g, '')      // Eliminar todas las demás etiquetas HTML
+        .replace(/\n\s*\n/g, '\n')   // Reemplazar múltiples saltos de línea por uno solo
+        .trim();
+    } else if (jiraData.fields.description) {
+      // Opción 2: Si no hay campos renderizados, procesar el Atlassian Document Format (ADF).
+      descriptionText = this.extractTextFromADF(jiraData.fields.description).trim();
+    }
+
     return {
       id: jiraData.id,
       key: jiraData.key,
@@ -227,7 +242,7 @@ export class JiraService {
         key: jiraData.fields.project.key,
         name: jiraData.fields.project.name
       },
-      description: jiraData.fields.description?.content?.[0]?.content?.[0]?.text || jiraData.renderedFields?.description || '',
+      description: descriptionText,
       assignee: jiraData.fields.assignee ? {
         displayName: jiraData.fields.assignee.displayName,
         emailAddress: jiraData.fields.assignee.emailAddress || ''
@@ -270,6 +285,23 @@ export class JiraService {
         emailAddress: jiraData.fields.assignee.emailAddress || ''
       } : undefined
     };
+  }
+
+  /**
+   * Extrae de forma recursiva todo el texto de un nodo de Atlassian Document Format (ADF).
+   * @param node El nodo ADF a procesar.
+   * @returns El texto plano extraído.
+   */
+  private extractTextFromADF(node: any): string {
+    if (node && node.type === 'text' && typeof node.text === 'string') {
+      return node.text + ' '; // Añadir espacio para separar textos
+    }
+
+    if (node && Array.isArray(node.content)) {
+      return node.content.map((childNode: any) => this.extractTextFromADF(childNode)).join('');
+    }
+
+    return '';
   }
 
   async addComment(issueKey: string, comment: string): Promise<void> {
