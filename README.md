@@ -2,7 +2,7 @@
 
 Una extensión de VSCode que se conecta directamente a Jira para obtener información de issues y generar test cases automáticamente usando Google Gemini.
 
-## 🚀 Características
+## Características
 
 - ✅ **Conexión directa a Jira** - Sin necesidad de backend intermedio
 - ✅ **Integración con Google Gemini** - Generación inteligente de test cases
@@ -11,14 +11,14 @@ Una extensión de VSCode que se conecta directamente a Jira para obtener informa
 - ✅ **Envío automático a Jira** - Los test cases se pueden enviar como comentarios
 - ✅ **Configuración flexible** - Configuración sencilla de Google Gemini
 
-## 🎯 Proveedor de IA
+## Proveedor de IA
 
 ### Google Gemini
 - **Requisitos**: [Gemini CLI](https://ai.google.dev/docs/gemini_cli_quickstart) instalado en el sistema.
 - **Configuración**: Requiere una API Key de Google Gemini configurada en los ajustes de la extensión.
 - **Ventajas**: Utiliza el poder del CLI para análisis avanzados y respuestas detalladas.
 
-## 📖 Uso
+## Uso
 
 1. **Configurar la extensión** (ver sección de Configuración).
 2. Abrir la paleta de comandos (`Cmd+Shift+P` / `Ctrl+Shift+P`).
@@ -28,7 +28,7 @@ Una extensión de VSCode que se conecta directamente a Jira para obtener informa
 6. Revisa los casos de prueba en el panel que aparecerá.
 7. Puedes enviar los casos de prueba como un comentario a la issue de Jira directamente desde el panel.
 
-## ⚙️ Configuración
+## Configuración
 
 ### Configuración de Jira (Requerida)
 
@@ -75,7 +75,7 @@ Para usar Google Gemini como proveedor de IA:
 2. En VS Code: `Ctrl+Shift+P` → "Extensions: Install from VSIX"
 3. Seleccionar el archivo descargado
 
-## 🔍 Ejemplo de Uso
+## Ejemplo de Uso
 
 ```
 1. Comando: "Get Jira Issue"
@@ -97,45 +97,6 @@ TITULO: Validar integración
 DESCRIPCION: Confirmar que la nueva funcionalidad se integra correctamente
 RESULTADO: No debe haber conflictos con funcionalidades existentes
 ```
-
-## 🐛 Troubleshooting
-
-### Error: "Gemini CLI no está instalado o la API Key no está configurada"
-- **Solución**: Asegúrate de tener el CLI de Gemini instalado y una API Key válida configurada
-
-### Error: "API Key de Google AI no configurada"
-- **Solución**: Ve a la configuración de la extensión y agrega tu API Key de Google AI
-
-### Error: "El CLI de Gemini no funciona correctamente"
-- **Solución**: Verifica que el CLI de Gemini esté instalado correctamente ejecutando `gemini --version` en tu terminal
-
-### Error: "Error de Jira API: 401"
-- **Solución**: Verifica que tu email y API Token de Jira sean correctos
-
-### Error: "No se pudo conectar a Jira"
-- **Solución**: Verifica que la URL de Jira sea correcta y tengas conexión a internet
-
-
-## 🤝 Contribuir
-
-1. Fork el repositorio
-2. Crear una rama para tu feature (`git checkout -b feature/nueva-funcionalidad`)
-3. Commit tus cambios (`git commit -am 'Agregar nueva funcionalidad'`)
-4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
-5. Crear un Pull Request
-
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
-
-## 🆘 Soporte
-
-Si encuentras algún problema o tienes sugerencias:
-
-1. Revisa la sección de [Troubleshooting](#-troubleshooting)
-2. Busca en los [Issues existentes](../../issues)
-3. Crea un [nuevo Issue](../../issues/new) si no encuentras solución
-
 ---
 
 **¡Disfruta generando test cases automáticamente! 🚀**
