@@ -2,7 +2,7 @@
   "name": "jira-test-generator",
   "displayName": "Jira Test Generator",
   "description": "Una extensión de VSCode que se conecta directamente a Jira para obtener información de issues y generar test cases automáticamente usando múltiples proveedores de IA.",
-  "version": "0.0.14",
+  "version": "1.0.0",
   "icon": "logo.png",
   "publisher": "alexander-romero",
   "author": {
@@ -81,12 +81,12 @@
         },
         "jiraTestGenerator.gemini.model": {
           "type": "string",
-          "enum": ["gemini-1.5-pro-latest", "gemini-1.5-flash-latest"],
+          "enum": ["gemini-1.5-pro", "gemini-1.5-flash"],
           "enumDescriptions": [
             "Gemini Pro - Modelo más potente y preciso",
             "Gemini Flash - Modelo más rápido y eficiente"
           ],
-          "default": "gemini-1.5-flash-latest",
+          "default": "gemini-1.5-flash",
           "description": "Modelo de Gemini a utilizar para la generación de test cases"
         }
       }

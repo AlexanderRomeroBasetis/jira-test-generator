@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="99092ac6-d2ac-467e-9ef0-73192f775c09" name="Changes" comment="feat: add support for Jira Server and enhanced AI test generation&#10;&#10;### Configuration Changes (package.json)&#10;- Add jiraServerType setting to choose between Jira Cloud/Server&#10;- Add separate authentication for Jira Cloud (email + apiToken)&#10;- Add separate authentication for Jira Server (username + password)&#10;- Add gemini.model setting with pro/flash model selection&#10;- Set gemini-1.5-flash-latest as default model&#10;&#10;### AI Service Enhancements (aiService.ts)&#10;- Add testType parameter support for Web/API specific test generation&#10;- Implement contextual prompt system based on test type&#10;- Add intelligent test case quantity (1-2 simple, 3-4 medium, 5-6 complex)&#10;- Update test case format to include TIPO field&#10;- Add Gemini model selection support via -m parameter&#10;- Implement comprehensive debug logging for response parsing&#10;- Add fallback parsing mechanism for improved reliability&#10;&#10;### Breaking Changes&#10;- generateTestCases() method signature updated with optional testType&#10;- New required configuration fields for Jira Server support&#10;&#10;### Technical Improvements&#10;- Enhanced markdown cleanup in test case parsing&#10;- Robust error handling with detailed logging&#10;- Modular prompt system for extensibility&#10;- Atomic and well-defined test case generation">
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/services/aiService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/services/aiService.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/services/jiraService.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/services/jiraService.ts" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="test-case-type" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;history&quot;: [
+    {
+      &quot;assignee&quot;: &quot;AlexanderRomeroBasetis&quot;
+    }
+  ],
+  &quot;lastFilter&quot;: {
+    &quot;assignee&quot;: &quot;AlexanderRomeroBasetis&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/AlexanderRomeroBasetis/jira-test-generator.git&quot;,
+    &quot;accountId&quot;: &quot;78304b19-b883-4c28-9de1-8168f72b559f&quot;
+  },
+  &quot;recentNewPullRequestHead&quot;: {
+    &quot;server&quot;: {
+      &quot;useHttp&quot;: false,
+      &quot;host&quot;: &quot;github.com&quot;,
+      &quot;port&quot;: null,
+      &quot;suffix&quot;: null
+    },
+    &quot;owner&quot;: &quot;AlexanderRomeroBasetis&quot;,
+    &quot;repository&quot;: &quot;jira-test-generator&quot;
+  }
+}</component>
+  <component name="KubernetesApiPersistence">{}</component>
+  <component name="KubernetesApiProvider">{
+  &quot;isMigrated&quot;: true
+}</component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 6
+}</component>
+  <component name="ProjectId" id="302l7NswiqqkKUP0bYzo8srdfle" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;jsx.switch.disabled&quot;: &quot;true&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/alexander.romero/Documents/GitHub/jira-test-generator&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;onboarding.tips.debug.path&quot;: &quot;/Users/alexander.romero/Documents/GitHub/jira-test-generator/untitled/src/Main.java&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;junie.allowlist&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;/Applications/IntelliJ IDEA.app/Contents/plugins/javascript-plugin/jsLanguageServicesImpl/external&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/src" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src/services/types" />
+    </key>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-9823dce3aa75-fbdcb00ec9e3-intellij.indexing.shared.core-IU-251.26927.53" />
+        <option value="bundled-js-predefined-d6986cc7102b-09060db00ec0-JavaScript-IU-251.26927.53" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="99092ac6-d2ac-467e-9ef0-73192f775c09" name="Changes" comment="" />
+      <created>1752833381221</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1752833381221</updated>
+      <workItem from="1752833383049" duration="69308000" />
+      <workItem from="1753362926631" duration="9501000" />
+      <workItem from="1753443802064" duration="42966000" />
+      <workItem from="1754046061299" duration="377000" />
+      <workItem from="1754046457462" duration="22000" />
+      <workItem from="1754046490803" duration="17000" />
+      <workItem from="1754046518892" duration="602000" />
+      <workItem from="1754299344745" duration="15132000" />
+      <workItem from="1754477662444" duration="365000" />
+      <workItem from="1754478061096" duration="51000" />
+      <workItem from="1754478127155" duration="11000" />
+      <workItem from="1754478154307" duration="50780000" />
+      <workItem from="1755179728296" duration="5218000" />
+      <workItem from="1757340142554" duration="2831000" />
+      <workItem from="1757405355308" duration="95000" />
+      <workItem from="1757512295562" duration="511000" />
+    </task>
+    <task id="LOCAL-00001" summary="feat: api call integrated, no need for backend">
+      <option name="closed" value="true" />
+      <created>1753094917157</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1753094917157</updated>
+    </task>
+    <task id="LOCAL-00002" summary="feat: comments to jira done, ui checkbox fix">
+      <option name="closed" value="true" />
+      <created>1753183267005</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1753183267005</updated>
+    </task>
+    <task id="LOCAL-00003" summary="feat: -variable names of TestCase interface fixed.&#10;-Local variable issue redundant fixed.&#10;-package.json fixed">
+      <option name="closed" value="true" />
+      <created>1753268406644</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1753268406644</updated>
+    </task>
+    <task id="LOCAL-00004" summary="feat: AI provider selection done">
+      <option name="closed" value="true" />
+      <created>1753350437889</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1753350437889</updated>
+    </task>
+    <task id="LOCAL-00005" summary="feat: gitignore updated">
+      <option name="closed" value="true" />
+      <created>1753351940483</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1753351940483</updated>
+    </task>
+    <task id="LOCAL-00006" summary="feat: gemini integrated, min words for description of the test case added, logo added, parse test-case improved">
+      <option name="closed" value="true" />
+      <created>1753358356979</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1753358356979</updated>
+    </task>
+    <task id="LOCAL-00007" summary="feat: version updated, prompt formated">
+      <option name="closed" value="true" />
+      <created>1753444593447</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1753444593447</updated>
+    </task>
+    <task id="LOCAL-00008" summary="feat: git ignore updated">
+      <option name="closed" value="true" />
+      <created>1753444962986</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1753444962986</updated>
+    </task>
+    <task id="LOCAL-00009" summary="feat: copilot disabled">
+      <option name="closed" value="true" />
+      <created>1754033229596</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1754033229596</updated>
+    </task>
+    <task id="LOCAL-00010" summary="feat: parseTestCaseSection &quot;type&quot; fixed">
+      <option name="closed" value="true" />
+      <created>1754034074854</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1754034074854</updated>
+    </task>
+    <task id="LOCAL-00011" summary="feat: add support for Jira Server and enhanced AI test generation&#10;&#10;### Configuration Changes (package.json)&#10;- Add jiraServerType setting to choose between Jira Cloud/Server&#10;- Add separate authentication for Jira Cloud (email + apiToken)&#10;- Add separate authentication for Jira Server (username + password)&#10;- Add gemini.model setting with pro/flash model selection&#10;- Set gemini-1.5-flash-latest as default model&#10;&#10;### AI Service Enhancements (aiService.ts)&#10;- Add testType parameter support for Web/API specific test generation&#10;- Implement contextual prompt system based on test type&#10;- Add intelligent test case quantity (1-2 simple, 3-4 medium, 5-6 complex)&#10;- Update test case format to include TIPO field&#10;- Add Gemini model selection support via -m parameter&#10;- Implement comprehensive debug logging for response parsing&#10;- Add fallback parsing mechanism for improved reliability&#10;&#10;### Breaking Changes&#10;- generateTestCases() method signature updated with optional testType&#10;- New required configuration fields for Jira Server support&#10;&#10;### Technical Improvements&#10;- Enhanced markdown cleanup in test case parsing&#10;- Robust error handling with detailed logging&#10;- Modular prompt system for extensibility&#10;- Atomic and well-defined test case generation">
+      <option name="closed" value="true" />
+      <created>1754562605710</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1754562605710</updated>
+    </task>
+    <task id="LOCAL-00012" summary="feat: add support for Jira Server and enhanced AI test generation&#10;&#10;### Configuration Changes (package.json)&#10;- Add jiraServerType setting to choose between Jira Cloud/Server&#10;- Add separate authentication for Jira Cloud (email + apiToken)&#10;- Add separate authentication for Jira Server (username + password)&#10;- Add gemini.model setting with pro/flash model selection&#10;- Set gemini-1.5-flash-latest as default model&#10;&#10;### AI Service Enhancements (aiService.ts)&#10;- Add testType parameter support for Web/API specific test generation&#10;- Implement contextual prompt system based on test type&#10;- Add intelligent test case quantity (1-2 simple, 3-4 medium, 5-6 complex)&#10;- Update test case format to include TIPO field&#10;- Add Gemini model selection support via -m parameter&#10;- Implement comprehensive debug logging for response parsing&#10;- Add fallback parsing mechanism for improved reliability&#10;&#10;### Breaking Changes&#10;- generateTestCases() method signature updated with optional testType&#10;- New required configuration fields for Jira Server support&#10;&#10;### Technical Improvements&#10;- Enhanced markdown cleanup in test case parsing&#10;- Robust error handling with detailed logging&#10;- Modular prompt system for extensibility&#10;- Atomic and well-defined test case generation">
+      <option name="closed" value="true" />
+      <created>1755183733542</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1755183733542</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="feat: api call integrated, no need for backend" />
+    <MESSAGE value="feat: comments to jira done, ui checkbox fix" />
+    <MESSAGE value="feat: -variable names of TestCase interface fixed.&#10;-Local variable issue redundant fixed.&#10;-package.json fixed" />
+    <MESSAGE value="feat: AI provider selection done" />
+    <MESSAGE value="feat: gitignore updated" />
+    <MESSAGE value="feat: gemini integrated, min words for description of the test case added, logo added, parse test-case improved" />
+    <MESSAGE value="feat: version updated, prompt formated" />
+    <MESSAGE value="feat: git ignore updated" />
+    <MESSAGE value="feat: copilot disabled" />
+    <MESSAGE value="feat: parseTestCaseSection &quot;type&quot; fixed" />
+    <MESSAGE value="feat: add support for Jira Server and enhanced AI test generation&#10;&#10;### Configuration Changes (package.json)&#10;- Add jiraServerType setting to choose between Jira Cloud/Server&#10;- Add separate authentication for Jira Cloud (email + apiToken)&#10;- Add separate authentication for Jira Server (username + password)&#10;- Add gemini.model setting with pro/flash model selection&#10;- Set gemini-1.5-flash-latest as default model&#10;&#10;### AI Service Enhancements (aiService.ts)&#10;- Add testType parameter support for Web/API specific test generation&#10;- Implement contextual prompt system based on test type&#10;- Add intelligent test case quantity (1-2 simple, 3-4 medium, 5-6 complex)&#10;- Update test case format to include TIPO field&#10;- Add Gemini model selection support via -m parameter&#10;- Implement comprehensive debug logging for response parsing&#10;- Add fallback parsing mechanism for improved reliability&#10;&#10;### Breaking Changes&#10;- generateTestCases() method signature updated with optional testType&#10;- New required configuration fields for Jira Server support&#10;&#10;### Technical Improvements&#10;- Enhanced markdown cleanup in test case parsing&#10;- Robust error handling with detailed logging&#10;- Modular prompt system for extensibility&#10;- Atomic and well-defined test case generation" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat: add support for Jira Server and enhanced AI test generation&#10;&#10;### Configuration Changes (package.json)&#10;- Add jiraServerType setting to choose between Jira Cloud/Server&#10;- Add separate authentication for Jira Cloud (email + apiToken)&#10;- Add separate authentication for Jira Server (username + password)&#10;- Add gemini.model setting with pro/flash model selection&#10;- Set gemini-1.5-flash-latest as default model&#10;&#10;### AI Service Enhancements (aiService.ts)&#10;- Add testType parameter support for Web/API specific test generation&#10;- Implement contextual prompt system based on test type&#10;- Add intelligent test case quantity (1-2 simple, 3-4 medium, 5-6 complex)&#10;- Update test case format to include TIPO field&#10;- Add Gemini model selection support via -m parameter&#10;- Implement comprehensive debug logging for response parsing&#10;- Add fallback parsing mechanism for improved reliability&#10;&#10;### Breaking Changes&#10;- generateTestCases() method signature updated with optional testType&#10;- New required configuration fields for Jira Server support&#10;&#10;### Technical Improvements&#10;- Enhanced markdown cleanup in test case parsing&#10;- Robust error handling with detailed logging&#10;- Modular prompt system for extensibility&#10;- Atomic and well-defined test case generation" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/untitled/src/Main.java</url>
+          <line>11</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
+  </component>
+</project>
